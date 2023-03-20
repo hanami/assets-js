@@ -1,7 +1,9 @@
 import fs from 'fs-extra';
 import path from 'path';
-import esbuild from 'esbuild';
+import esbuild, { BuildOptions } from 'esbuild';
 import hanamiEsbuild from '../src/hanami-esbuild';
+import { globSync } from 'glob'
+import { execSync } from 'child_process';
 
 const originalWorkingDir = process.cwd();
 
@@ -41,27 +43,57 @@ describe('hanamiEsbuild', () => {
     await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
     await fs.writeFile(entryPoint2, "console.log('Hello, Admin!');");
 
-    // TODO: Set esbuild defaults to the plugin
-    await esbuild.build({
-      entryPoints: [entryPoint1, entryPoint2],
+    const entrypoints: Record<string, string> = {}
+
+    // Normalize paths for entrypoints.
+    ;[entryPoint1, entryPoint2].map((str) => {
+      let modifiedPath = str.replace(/(app\/assets\/javascripts\/|slices\/(.*\/)assets\/javascripts\/)/, "$2")
+      const relativePath = path.relative(dest, modifiedPath)
+
+      const { dir, name } = path.parse(relativePath)
+
+      if (dir) {
+        modifiedPath = dir + path.sep + name
+      } else {
+        modifiedPath = name
+      }
+      entrypoints[modifiedPath] = str
+    })
+
+    console.log(entrypoints)
+    const config: Partial<BuildOptions> = {
       bundle: true,
       outdir: outDir,
       loader: loader,
       logLevel: "silent",
       minify: true,
       sourcemap: true,
-      entryNames: "[name]-[hash]",
+      entryNames: "[dir]/[name]-[hash]",
       plugins: [hanamiEsbuild()],
+    }
+
+    // TODO: Set esbuild defaults to the plugin
+    await esbuild.build({
+      ...config,
+      entryPoints: entrypoints
+      // {
+      //   "index": entryPoint1 ,
+      //   "admin/index": entryPoint2
+      // },
     });
 
+    execSync("tree .", {stdio: "inherit"})
+
     // FIXME: this path should take into account the file hashing in the file name
-    const appAssetExists = await fs.pathExists(path.join(dest, 'public/assets/index.js'));
+    const appAsset = globSync(path.join('public/assets/index-*.js'))[0]
+    const appAssetExists = await fs.pathExists(appAsset);
     expect(appAssetExists).toBe(true);
 
     // FIXME: this path should take into account the file hashing in the file name
-    const sliceAssetExists = await fs.pathExists(path.join(dest, 'public/assets/admin/index.js'));
+    const sliceAsset = globSync(path.join('public/assets/admin/index-*.js'))[0];
+    const sliceAssetExists = await fs.pathExists(sliceAsset);
     expect(sliceAssetExists).toBe(true);
-  
+
     // const manifestExists = await fs.pathExists(path.join(dest, 'public/assets.json'));
     // expect(manifestExists).toBe(true);
 

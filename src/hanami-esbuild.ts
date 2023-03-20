@@ -38,7 +38,7 @@ const hanamiEsbuild = (options: HanamiEsbuildOptions = { ...defaults }): Plugin 
         const resolvedPath = relativePath.replace(/app(\/|\\)assets(\/|\\)javascripts(\/|\\)/, "");
         const destinationPath = path.join(options.root, options.destDir, resolvedPath);
 
-        return { path: destinationPath }
+        return { }
       });
 
       // Resolve assets from slices/*/assets to public/assets/<slice_name>
@@ -53,7 +53,7 @@ const hanamiEsbuild = (options: HanamiEsbuildOptions = { ...defaults }): Plugin 
 
         fs.ensureDir(path.join(options.root, options.destDir, sliceName));
 
-        return { path: destinationPath }
+        return { }
       });
 
       // build.onEnd(async () => {
