@@ -60,11 +60,11 @@ describe('hanamiEsbuild', () => {
       entrypoints[modifiedPath] = str
     })
 
-    console.log(entrypoints)
     const config: Partial<BuildOptions> = {
       bundle: true,
       outdir: outDir,
       loader: loader,
+      absWorkingDir: dest,
       logLevel: "silent",
       minify: true,
       sourcemap: true,
@@ -82,7 +82,7 @@ describe('hanamiEsbuild', () => {
       // },
     });
 
-    execSync("tree .", {stdio: "inherit"})
+    // execSync("tree .", {stdio: "inherit"})
 
     // FIXME: this path should take into account the file hashing in the file name
     const appAsset = globSync(path.join('public/assets/index-*.js'))[0]

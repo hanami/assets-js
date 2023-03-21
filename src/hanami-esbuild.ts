@@ -1,5 +1,5 @@
 import {
-  // BuildResult,
+  BuildResult,
   // Metafile,
   Plugin,
   PluginBuild
@@ -27,6 +27,8 @@ const hanamiEsbuild = (options: HanamiEsbuildOptions = { ...defaults }): Plugin 
       build.initialOptions.metafile = true;
       options.root = options.root || process.cwd();
 
+      const entrypoints: Record<string, string> = {}
+
       fs.ensureDir(path.join(options.root, options.destDir));
 
       // Resolve assets from app/assets to public/assets
@@ -35,8 +37,10 @@ const hanamiEsbuild = (options: HanamiEsbuildOptions = { ...defaults }): Plugin 
         // FIXME: review which path is needed and which is not
         // FIXME: review file system path destinations vs mapped URLs
         const relativePath = path.relative(options.root, args.path);
-        const resolvedPath = relativePath.replace(/app(\/|\\)assets(\/|\\)javascripts(\/|\\)/, "");
-        const destinationPath = path.join(options.root, options.destDir, resolvedPath);
+        const resolvedPath = relativePath.replace(/app(\/|\\)assets(\/|\\)(.*)(\/|\\)/, "");
+        const destinationPath = path.join(options.destDir, resolvedPath);
+
+        entrypoints[resolvedPath] = destinationPath;
 
         return { }
       });
@@ -49,11 +53,16 @@ const hanamiEsbuild = (options: HanamiEsbuildOptions = { ...defaults }): Plugin 
         const relativePath = path.relative(options.root, args.path);
         const sliceName = relativePath.split(path.sep)[1];
         const resolvedPath = relativePath.replace(/slices(\/|\\)(.*)(\/|\\)assets(\/|\\)javascripts(\/|\\)/, `${sliceName}${path.sep}`);
-        const destinationPath = path.join(options.root, options.destDir, resolvedPath);
+        const destinationPath = path.join(options.destDir, resolvedPath);
 
-        fs.ensureDir(path.join(options.root, options.destDir, sliceName));
+        entrypoints[resolvedPath] = destinationPath;
 
         return { }
+      });
+
+      build.onEnd((result: BuildResult) => {
+        console.log(entrypoints);
+        console.log(result);
       });
 
       // build.onEnd(async () => {
