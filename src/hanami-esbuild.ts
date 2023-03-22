@@ -6,6 +6,8 @@ import {
 import fs from 'fs-extra';
 import path from 'path';
 
+const URL_SEPARATOR = '/';
+
 interface HanamiEsbuildPluginOptions {
   root: string;
   publicDir: string;
@@ -32,6 +34,18 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
         const outputs = result.metafile?.outputs;
         const assetsManifest: Record<string, string> = {};
 
+        const calulateSourcePath = (str: string): string => {
+          return normalizePath(str).replace(/\/assets\//, '').replace(/-[A-Z0-9]{8}/, '');
+        }
+
+        const calulateDestinationPath = (str: string): string => {
+          return normalizePath(str).replace(/public/, '');
+        }
+
+        const normalizePath = (str: string): string => {
+          return str.replace(/[\\]+/, URL_SEPARATOR);
+        }
+
         if (typeof outputs === 'undefined') {
           return;
         }
@@ -41,8 +55,8 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
             continue;
           }
 
-          const destinationPath = key.replace(/public/, '');
-          const sourcePath = destinationPath.replace(/(\/|\\)assets(\/|\\)/, '').replace(/-[A-Z0-9]{8}/, '');
+          const destinationPath = calulateDestinationPath(key);
+          const sourcePath = calulateSourcePath(destinationPath);
 
           assetsManifest[sourcePath] = destinationPath;
         }
