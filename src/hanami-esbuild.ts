@@ -6,21 +6,21 @@ import {
 import fs from 'fs-extra';
 import path from 'path';
 
-interface HanamiEsbuildOptions {
+interface HanamiEsbuildPluginOptions {
   root: string;
   publicDir: string;
   destDir: string;
   manifestPath: string;
 }
 
-const defaults: Pick<HanamiEsbuildOptions, 'root' | 'publicDir' | 'destDir' | 'manifestPath'> = {
+const defaults: Pick<HanamiEsbuildPluginOptions, 'root' | 'publicDir' | 'destDir' | 'manifestPath'> = {
   root: '',
   publicDir: 'public',
   destDir: path.join('public', 'assets'),
   manifestPath: path.join('public', 'assets.json')
 };
 
-const hanamiEsbuild = (options: HanamiEsbuildOptions = { ...defaults }): Plugin => {
+const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): Plugin => {
   return {
     name: 'hananmi-esbuild',
 
