@@ -30,6 +30,8 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
       build.initialOptions.metafile = true;
       options.root = options.root || process.cwd();
 
+      const manifest = path.join(options.root, options.manifestPath);
+
       build.onEnd(async (result: BuildResult) => {
         const outputs = result.metafile?.outputs;
         const assetsManifest: Record<string, string> = {};
@@ -62,7 +64,7 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
         }
 
         // Write assets manifest to the destination directory
-        await fs.writeJson(options.manifestPath, assetsManifest, { spaces: 2 });
+        await fs.writeJson(manifest, assetsManifest, { spaces: 2 });
       });
     },
   };
