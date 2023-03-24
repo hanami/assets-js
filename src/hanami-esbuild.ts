@@ -1,33 +1,44 @@
 #!/usr/bin/env node
 
 import path from 'path';
+import { globSync } from 'glob'
 import esbuild, { BuildOptions } from 'esbuild';
 import hanamiEsbuild from './hanami-esbuild-plugin';
 
 const dest = process.cwd();
-const outDir = path.join(dest, 'public/assets');
+const outDir = path.join(dest, 'public', 'assets');
 const loader = {};
 
-const entryPoint1 = path.join(dest, 'app/assets/javascripts/index.js');
-const entryPoint2 = path.join(dest, 'slices/admin/assets/javascripts/index.js');
-const entryPoint3 = path.join(dest, 'slices/metrics/assets/javascripts/app.ts');
+const entryPointExtensions = "*.{js,ts,mjs,mts}";
+const entryPoints = globSync([
+  path.join("app", "assets", "javascripts", entryPointExtensions),
+  path.join("slices", "*", "assets", "javascripts", entryPointExtensions),
+]);
+// FIXME: make cross platform
+const entryPointsMatcher = /(app\/assets\/javascripts\/|slices\/(.*\/)assets\/javascripts\/)/
 
-const entrypoints: Record<string, string> = {}
+const mapEntryPoints = (entryPoints: string[]): Record<string, string> => {
+  const result: Record<string, string> = {};
 
-// Normalize paths for entrypoints.
-;[entryPoint1, entryPoint2, entryPoint3].map((str) => {
-  let modifiedPath = str.replace(/(app\/assets\/javascripts\/|slices\/(.*\/)assets\/javascripts\/)/, "$2")
-  const relativePath = path.relative(dest, modifiedPath)
+  entryPoints.forEach((entryPoint) => {
+    let modifiedPath = entryPoint.replace(entryPointsMatcher, "$2")
+    const relativePath = path.relative(dest, modifiedPath)
 
-  const { dir, name } = path.parse(relativePath)
+    const { dir, name } = path.parse(relativePath)
 
-  if (dir) {
-    modifiedPath = dir + path.sep + name
-  } else {
-    modifiedPath = name
-  }
-  entrypoints[modifiedPath] = str
-})
+    if (dir) {
+      modifiedPath = path.join(dir, name)
+    } else {
+      modifiedPath = name
+    }
+
+    result[modifiedPath] = entryPoint
+  });
+
+  return result;
+}
+
+const mappedEntryPoints = mapEntryPoints(entryPoints);
 
 const config: Partial<BuildOptions> = {
   bundle: true,
@@ -44,9 +55,8 @@ const config: Partial<BuildOptions> = {
 // FIXME: add `await` to esbuild.build
 esbuild.build({
   ...config,
-  entryPoints: entrypoints
-  // {
-  //   "index": entryPoint1 ,
-  //   "admin/index": entryPoint2
-  // },
-});
+  entryPoints: mappedEntryPoints
+}).catch(err => {
+    console.log(err);
+    process.exit(1);
+  });
