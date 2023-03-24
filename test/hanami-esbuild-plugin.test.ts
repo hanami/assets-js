@@ -1,9 +1,8 @@
 import fs from 'fs-extra';
 import path from 'path';
 import esbuild, { BuildOptions } from 'esbuild';
-import hanamiEsbuild from '../src/hanami-esbuild';
+import hanamiEsbuild from '../src/hanami-esbuild-plugin';
 import { globSync } from 'glob'
-import { execSync } from 'child_process';
 
 const originalWorkingDir = process.cwd();
 

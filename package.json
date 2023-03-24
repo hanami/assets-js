@@ -2,8 +2,11 @@
   "name": "hanami-esbuild",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/hanami-esbuild.js",
-  "types": "dist/hanami-esbuild.d.ts",
+  "bin": {
+    "hanami-esbuild": "dist/hanami-esbuild.js"
+  },
+  "main": "dist/hanami-esbuild-plugin.js",
+  "types": "dist/hanami-esbuild-plugin.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "jest"
