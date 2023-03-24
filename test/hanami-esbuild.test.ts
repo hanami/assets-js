@@ -1,14 +1,12 @@
 import fs from 'fs-extra';
 import path from 'path';
-import esbuild, { BuildOptions } from 'esbuild';
-import hanamiEsbuild from '../src/hanami-esbuild-plugin';
 import { globSync } from 'glob'
+import { execSync } from 'child_process';
 
 const originalWorkingDir = process.cwd();
+const binPath = path.join(originalWorkingDir, 'dist', 'hanami-esbuild.js');
 
 const dest = path.resolve(__dirname, '..', 'tmp');
-const outDir = path.join(dest, 'public/assets');
-const loader = {};
 
 // Helper function to create a test environment
 async function createTestEnvironment() {
@@ -45,46 +43,7 @@ describe('hanamiEsbuild', () => {
     await fs.writeFile(entryPoint2, "console.log('Hello, Admin!');");
     await fs.writeFile(entryPoint3, "console.log('Hello, Metrics!');");
 
-    const entrypoints: Record<string, string> = {}
-
-      // Normalize paths for entrypoints.
-      ;[entryPoint1, entryPoint2, entryPoint3].map((str) => {
-        let modifiedPath = str.replace(/(app\/assets\/javascripts\/|slices\/(.*\/)assets\/javascripts\/)/, "$2")
-        const relativePath = path.relative(dest, modifiedPath)
-
-        const { dir, name } = path.parse(relativePath)
-
-        if (dir) {
-          modifiedPath = dir + path.sep + name
-        } else {
-          modifiedPath = name
-        }
-        entrypoints[modifiedPath] = str
-      })
-
-    const config: Partial<BuildOptions> = {
-      bundle: true,
-      outdir: outDir,
-      loader: loader,
-      absWorkingDir: dest,
-      logLevel: "silent",
-      minify: true,
-      sourcemap: true,
-      entryNames: "[dir]/[name]-[hash]",
-      plugins: [hanamiEsbuild()],
-    }
-
-    // TODO: Set esbuild defaults to the plugin
-    await esbuild.build({
-      ...config,
-      entryPoints: entrypoints
-      // {
-      //   "index": entryPoint1 ,
-      //   "admin/index": entryPoint2
-      // },
-    });
-
-    // execSync("tree .", {stdio: "inherit"})
+    execSync(binPath, {stdio: "inherit"})
 
     // FIXME: this path should take into account the file hashing in the file name
     const appAsset = globSync(path.join('public/assets/index-*.js'))[0]
