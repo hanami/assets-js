@@ -5,6 +5,9 @@ import { globSync } from 'glob'
 import esbuild, { BuildOptions } from 'esbuild';
 import hanamiEsbuild from './hanami-esbuild-plugin';
 
+const args = process.argv.slice(2)
+const watch = args.includes("--watch")
+
 const dest = process.cwd();
 const outDir = path.join(dest, 'public', 'assets');
 const loader = {};
@@ -40,23 +43,44 @@ const mapEntryPoints = (entryPoints: string[]): Record<string, string> => {
 
 const mappedEntryPoints = mapEntryPoints(entryPoints);
 
-const config: Partial<BuildOptions> = {
+const buildOptions: Partial<BuildOptions> = {
   bundle: true,
   outdir: outDir,
   loader: loader,
   absWorkingDir: dest,
   logLevel: "silent",
-  minify: true,
-  sourcemap: true,
-  entryNames: "[dir]/[name]-[hash]",
-  plugins: [hanamiEsbuild()],
+  entryPoints: mappedEntryPoints,
 }
 
-// FIXME: add `await` to esbuild.build
-esbuild.build({
-  ...config,
-  entryPoints: mappedEntryPoints
-}).catch(err => {
+if (watch) {
+  const watchBuildOptions: Partial<BuildOptions> = {
+    ...buildOptions,
+    minify: false,
+    sourcemap: false,
+    entryNames: "[dir]/[name]",
+    plugins: [], 
+  }
+
+  esbuild.context(watchBuildOptions).then((ctx) => {
+    // FIXME: add `await` to ctx.watch
+    ctx.watch();
+  }).catch(err => {
     console.log(err);
     process.exit(1);
   });
+} else {
+
+  const precompileBuildOptions: Partial<BuildOptions> = {
+    ...buildOptions,
+    minify: true,
+    sourcemap: true,
+    entryNames: "[dir]/[name]-[hash]",
+    plugins: [hanamiEsbuild()],
+  }
+
+  // FIXME: add `await` to esbuild.build
+  esbuild.build(precompileBuildOptions).catch(err => {
+    console.log(err);
+    process.exit(1);
+  });
+}
