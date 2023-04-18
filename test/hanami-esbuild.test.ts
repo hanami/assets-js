@@ -69,9 +69,15 @@ describe('hanamiEsbuild', () => {
 
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
-      "admin/index.js": "/assets/admin/index-YMWJCFAK.js",
-      "index.js": "/assets/index-A3EJVGR4.js",
-      "metrics/app.js": "/assets/metrics/app-62A4ZWTV.js",
+      "admin/index.js": {
+        "url": "/assets/admin/index-YMWJCFAK.js"
+      },
+      "index.js": {
+        "url": "/assets/index-A3EJVGR4.js"
+      },
+      "metrics/app.js": {
+        "url": "/assets/metrics/app-62A4ZWTV.js"
+      },
     });
   });
 });

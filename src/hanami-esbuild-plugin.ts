@@ -34,17 +34,17 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
 
       build.onEnd(async (result: BuildResult) => {
         const outputs = result.metafile?.outputs;
-        const assetsManifest: Record<string, string> = {};
+        const assetsManifest: Record<string, Record<string, string>> = {};
 
-        const calulateSourcePath = (str: string): string => {
-          return normalizePath(str).replace(/\/assets\//, '').replace(/-[A-Z0-9]{8}/, '');
+        const calulateSourceUrl = (str: string): string => {
+          return normalizeUrl(str).replace(/\/assets\//, '').replace(/-[A-Z0-9]{8}/, '');
         }
 
-        const calulateDestinationPath = (str: string): string => {
-          return normalizePath(str).replace(/public/, '');
+        const calulateDestinationUrl = (str: string): string => {
+          return normalizeUrl(str).replace(/public/, '');
         }
 
-        const normalizePath = (str: string): string => {
+        const normalizeUrl = (str: string): string => {
           return str.replace(/[\\]+/, URL_SEPARATOR);
         }
 
@@ -57,10 +57,10 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
             continue;
           }
 
-          const destinationPath = calulateDestinationPath(key);
-          const sourcePath = calulateSourcePath(destinationPath);
+          const destinationUrl = calulateDestinationUrl(key);
+          const sourceUrl = calulateSourceUrl(destinationUrl);
 
-          assetsManifest[sourcePath] = destinationPath;
+          assetsManifest[sourceUrl] = { "url": destinationUrl };
         }
 
         // Write assets manifest to the destination directory
