@@ -70,13 +70,16 @@ describe('hanamiEsbuild', () => {
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "admin/index.js": {
-        "url": "/assets/admin/index-YMWJCFAK.js"
+        "url": "/assets/admin/index-YMWJCFAK.js",
+        "sri": "sha256-Lc5EeWq0rkBO9qgHXBcGmoHWyChQmENK8wj1W39LcqM="
       },
       "index.js": {
-        "url": "/assets/index-A3EJVGR4.js"
+        "url": "/assets/index-A3EJVGR4.js",
+        "sri": "sha256-/lxoexmKjJgp4Fx1JnExzKN1/UKRcjBMmDkREEuF448="
       },
       "metrics/app.js": {
-        "url": "/assets/metrics/app-62A4ZWTV.js"
+        "url": "/assets/metrics/app-62A4ZWTV.js",
+        "sri": "sha256-fTQKAvMqOFXmH5p3ZrzBXvAQhHKGLKPfxxf8988y7fw="
       },
     });
   });
