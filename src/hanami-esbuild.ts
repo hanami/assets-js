@@ -2,9 +2,23 @@
 
 import path from 'path';
 import { globSync } from 'glob'
+import { argv } from 'node:process';
 import esbuild, { BuildOptions } from 'esbuild';
 import hanamiEsbuild from './hanami-esbuild-plugin';
+import { HanamiEsbuildPluginOptions, defaults } from './hanami-esbuild-plugin';
 
+const parseArgs = (args: Array<string>): Record<string, string> => {
+  const result: Record<string, string> = {};
+
+  args.slice(2).forEach((arg) => {
+    const [key, value] = arg.replace(/^--/, '').split('=');
+    result[key] = value;
+  });
+
+  return result;
+}
+
+const args = parseArgs(argv);
 const dest = process.cwd();
 const outDir = path.join(dest, 'public', 'assets');
 const loader = {};
@@ -16,6 +30,13 @@ const entryPoints = globSync([
 ]);
 // FIXME: make cross platform
 const entryPointsMatcher = /(app\/assets\/javascripts\/|slices\/(.*\/)assets\/javascripts\/)/
+
+var sriAlgorithms = [] as Array<string>;
+if (args['sri']) {
+  sriAlgorithms = args['sri'].split(',');
+}
+
+const options: HanamiEsbuildPluginOptions = { ...defaults, sriAlgorithms: sriAlgorithms };
 
 const mapEntryPoints = (entryPoints: string[]): Record<string, string> => {
   const result: Record<string, string> = {};
@@ -49,7 +70,7 @@ const config: Partial<BuildOptions> = {
   minify: true,
   sourcemap: true,
   entryNames: "[dir]/[name]-[hash]",
-  plugins: [hanamiEsbuild()],
+  plugins: [hanamiEsbuild(options)],
 }
 
 // FIXME: add `await` to esbuild.build

@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { globSync } from 'glob'
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 
 const originalWorkingDir = process.cwd();
 const binPath = path.join(originalWorkingDir, 'dist', 'hanami-esbuild.js');
@@ -43,7 +43,7 @@ describe('hanamiEsbuild', () => {
     await fs.writeFile(entryPoint2, "console.log('Hello, Admin!');");
     await fs.writeFile(entryPoint3, "console.log('Hello, Metrics!');");
 
-    execSync(binPath, {stdio: "inherit"})
+    execSync(binPath, { stdio: "inherit" })
 
     // FIXME: this path should take into account the file hashing in the file name
     const appAsset = globSync(path.join('public/assets/index-*.js'))[0]
@@ -70,16 +70,36 @@ describe('hanamiEsbuild', () => {
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "admin/index.js": {
-        "url": "/assets/admin/index-YMWJCFAK.js",
-        "sri": "sha256-Lc5EeWq0rkBO9qgHXBcGmoHWyChQmENK8wj1W39LcqM="
+        "url": "/assets/admin/index-YMWJCFAK.js"
       },
       "index.js": {
-        "url": "/assets/index-A3EJVGR4.js",
-        "sri": "sha256-/lxoexmKjJgp4Fx1JnExzKN1/UKRcjBMmDkREEuF448="
+        "url": "/assets/index-A3EJVGR4.js"
       },
       "metrics/app.js": {
-        "url": "/assets/metrics/app-62A4ZWTV.js",
-        "sri": "sha256-fTQKAvMqOFXmH5p3ZrzBXvAQhHKGLKPfxxf8988y7fw="
+        "url": "/assets/metrics/app-62A4ZWTV.js"
+      },
+    });
+  });
+
+  test('generates SRI', async () => {
+    const entryPoint1 = path.join(dest, 'app/assets/javascripts/index.js');
+    await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
+
+    execFileSync(binPath, ['--sri=sha256,sha384,sha512'], { stdio: "inherit" })
+
+    // Read and parse the manifest file
+    const manifestContent = await fs.readFile(path.join(dest, 'public/assets.json'), 'utf-8');
+    const manifest = JSON.parse(manifestContent);
+
+    // Check if the manifest contains the correct file paths
+    expect(manifest).toEqual({
+      "index.js": {
+        "url": "/assets/index-A3EJVGR4.js",
+        "sri": [
+          "sha256-/lxoexmKjJgp4Fx1JnExzKN1/UKRcjBMmDkREEuF448=",
+          "sha384-FxEUrhNW+v8maw4V1mMu8UrnJcbWUd5/9dWSJii1wGbCPrE+SQuqaSfLAtO5tk6k",
+          "sha512-qnX1lVVY+KBRuXcXbaeJQNfT9Motew0OAQKwhkq0dalyBsM6Mzgmk3oD7pn08UVKsApLZZcMwDcZcTHvsV8jvg==",
+        ]
       },
     });
   });
