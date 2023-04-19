@@ -5,22 +5,30 @@ import {
 } from 'esbuild';
 import fs from 'fs-extra';
 import path from 'path';
+import crypto from 'node:crypto';
 
 const URL_SEPARATOR = '/';
 
-interface HanamiEsbuildPluginOptions {
+export interface HanamiEsbuildPluginOptions {
   root: string;
   publicDir: string;
   destDir: string;
   manifestPath: string;
+  sriAlgorithms: Array<string>;
 }
 
-const defaults: Pick<HanamiEsbuildPluginOptions, 'root' | 'publicDir' | 'destDir' | 'manifestPath'> = {
+export const defaults: Pick<HanamiEsbuildPluginOptions, 'root' | 'publicDir' | 'destDir' | 'manifestPath' | 'sriAlgorithms'> = {
   root: '',
   publicDir: 'public',
   destDir: path.join('public', 'assets'),
-  manifestPath: path.join('public', 'assets.json')
+  manifestPath: path.join('public', 'assets.json'),
+  sriAlgorithms: [],
 };
+
+interface Asset {
+  url: string;
+  sri?: Array<string>;
+}
 
 const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): Plugin => {
   return {
@@ -34,7 +42,7 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
 
       build.onEnd(async (result: BuildResult) => {
         const outputs = result.metafile?.outputs;
-        const assetsManifest: Record<string, Record<string, string>> = {};
+        const assetsManifest: Record<string, Asset> = {};
 
         const calulateSourceUrl = (str: string): string => {
           return normalizeUrl(str).replace(/\/assets\//, '').replace(/-[A-Z0-9]{8}/, '');
@@ -46,6 +54,13 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
 
         const normalizeUrl = (str: string): string => {
           return str.replace(/[\\]+/, URL_SEPARATOR);
+        }
+
+        const calculateSubresourceIntegrity = (algorithm: string, path: string): string => {
+          const content = fs.readFileSync(path, 'utf8');
+          const hash = crypto.createHash(algorithm).update(content).digest('base64');
+
+          return `${algorithm}-${hash}`;
         }
 
         if (typeof outputs === 'undefined') {
@@ -60,7 +75,18 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
           const destinationUrl = calulateDestinationUrl(key);
           const sourceUrl = calulateSourceUrl(destinationUrl);
 
-          assetsManifest[sourceUrl] = { "url": destinationUrl };
+          var asset: Asset = { url: destinationUrl };
+
+          if (options.sriAlgorithms.length > 0) {
+            asset.sri = [];
+
+            for (const algorithm of options.sriAlgorithms) {
+              const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, key);
+              asset.sri.push(subresourceIntegrity);
+            }
+          }
+
+          assetsManifest[sourceUrl] = asset;
         }
 
         // Write assets manifest to the destination directory
