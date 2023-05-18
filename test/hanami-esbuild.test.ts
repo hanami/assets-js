@@ -139,6 +139,24 @@ describe('hanamiEsbuild', () => {
         "sri": [
           "sha384-Wj7sxFDKOiC2c2nPfyDRvBHKG0LiwNiQYkoSKHD/COISJbiAlSLNwHhm0FGR8+KB"
         ]
+      },
+      "admin/app.js": {
+        "url": "/assets/admin/app-3ROSYITC.js",
+        "sri": [
+          "sha384-DoWFNj0ynI1lJUvCY2R1DMBIoF10HoKT08ya5at4/jlGOOgPwWYfu0RF9Sq+Kcne"
+        ]
+      },
+      "font.otf": {
+        "url": "/assets/font-E1A70B27.otf",
+        "sri": [
+          "sha384-Lpm/oUsCQkOg41WyENyyB1zjaX/FB522VWlU44JKakwzwBxvu11le0ILkiPsR73K"
+        ]
+      },
+      "logo.png": {
+        "url": "/assets/logo-C1EF77E4.png",
+        "sri": [
+          "sha384-7q5x+ZjZrCoWwyV0BTyc8HUPf1xr+n9l77gwxmwywPWSe0PtopZj1T8NTUPFo0FI"
+        ]
       }
     });
 
