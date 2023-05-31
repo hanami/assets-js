@@ -1,9 +1,9 @@
 {
-  "name": "hanami-esbuild",
+  "name": "hanami-assets",
   "version": "1.0.0",
   "description": "",
   "bin": {
-    "hanami-esbuild": "dist/hanami-esbuild.js"
+    "hanami-assets": "dist/hanami-assets.js"
   },
   "main": "dist/hanami-esbuild-plugin.js",
   "types": "dist/hanami-esbuild-plugin.d.ts",

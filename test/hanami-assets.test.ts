@@ -5,7 +5,7 @@ import { execFileSync, execSync } from 'child_process';
 import crypto from 'node:crypto';
 
 const originalWorkingDir = process.cwd();
-const binPath = path.join(originalWorkingDir, 'dist', 'hanami-esbuild.js');
+const binPath = path.join(originalWorkingDir, 'dist', 'hanami-assets.js');
 
 const dest = path.resolve(__dirname, '..', 'tmp', crypto.randomUUID());
 
@@ -27,7 +27,7 @@ async function cleanTestEnvironment() {
   await fs.remove(dest); // Comment this line to manually inspect precompile results
 }
 
-describe('hanamiEsbuild', () => {
+describe('hanami-assets', () => {
   beforeEach(async () => {
     await createTestEnvironment();
   });
