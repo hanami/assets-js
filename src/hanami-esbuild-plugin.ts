@@ -32,7 +32,7 @@ interface Asset {
 
 const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): Plugin => {
   return {
-    name: 'hananmi-esbuild',
+    name: 'hanami-esbuild',
 
     setup(build: PluginBuild) {
       build.initialOptions.metafile = true;

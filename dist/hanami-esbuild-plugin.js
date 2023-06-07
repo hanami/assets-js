@@ -17,7 +17,7 @@ exports.defaults = {
 };
 const hanamiEsbuild = (options = { ...exports.defaults }) => {
     return {
-        name: 'hananmi-esbuild',
+        name: 'hanami-esbuild',
         setup(build) {
             build.initialOptions.metafile = true;
             options.root = options.root || process.cwd();
