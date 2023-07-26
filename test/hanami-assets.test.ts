@@ -117,9 +117,9 @@ describe('hanami-assets', () => {
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "app.js": {
-        "url": "/assets/app-QECGTTYG.js",
+        "url": "/assets/app-YF24KTUS.js",
         "sri": [
-          "sha384-d9ndh67iVrvaACuWjEDJDJlThKvAOdILG011RxYJt1dQynvf4JXNORcUiZ9nO7lP"
+          "sha384-vYmchg81BTbf7ToS7GmqlHU85jnQJOnkMRT+3NEfTsDGJmKquyMGk8DENyd9C6ZC"
         ]
       },
       "background.jpg": {
@@ -129,9 +129,9 @@ describe('hanami-assets', () => {
         ]
       },
       "app.css": {
-        "url": "/assets/app-X3IVBUS4.css",
+        "url": "/assets/app-ISMEPBMJ.css",
         "sri": [
-          "sha384-5nzIXhIOlNmMdqkZD7jDG2Xr/a0H4VREoibx6JpCuXThVoUcVYnRdwiY6JL4k5YK"
+          "sha384-XI8KeiPqBbtxWX3JvD4OIos7cNGNHIPL8/MteaUxGWLS+Yp/nkE1fb4M9Gc2tvN2"
         ]
       },
       "login/app.js": {
