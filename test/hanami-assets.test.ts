@@ -117,9 +117,9 @@ describe('hanami-assets', () => {
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "app.js": {
-        "url": "/assets/app-YF24KTUS.js",
+        "url": "/assets/app-F66C5HBN.js",
         "sri": [
-          "sha384-vYmchg81BTbf7ToS7GmqlHU85jnQJOnkMRT+3NEfTsDGJmKquyMGk8DENyd9C6ZC"
+          "sha384-HyjZlrfiFrDd3kcjk++Tkbv908eTWAXXMu6Nha8liVSuH9gr+3fG4OrYYBLY/iiw"
         ]
       },
       "background.jpg": {
