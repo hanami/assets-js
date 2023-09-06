@@ -55,6 +55,7 @@ const externalEsbuildDirectories = () => {
 };
 const args = parseArgs(node_process_1.argv);
 const dest = process.cwd();
+const watch = args.hasOwnProperty("watch");
 const outDir = path_1.default.join(dest, 'public', 'assets');
 const loader = {
     '.tsx': 'tsx',
@@ -87,23 +88,42 @@ if (args['sri']) {
     sriAlgorithms = args['sri'].split(',');
 }
 const options = { ...hanami_esbuild_plugin_2.defaults, sriAlgorithms: sriAlgorithms };
-const config = {
-    bundle: true,
-    outdir: outDir,
-    absWorkingDir: dest,
-    loader: loader,
-    external: externalDirs,
-    logLevel: "silent",
-    minify: true,
-    sourcemap: true,
-    entryNames: "[dir]/[name]-[hash]",
-    plugins: [(0, hanami_esbuild_plugin_1.default)(options)],
-};
-// FIXME: add `await` to esbuild.build
-esbuild_1.default.build({
-    ...config,
-    entryPoints: mappedEntryPoints,
-}).catch(err => {
-    console.log(err);
-    process.exit(1);
-});
+if (watch) {
+    const watchBuildOptions = {
+        ...options,
+        minify: false,
+        sourcemap: false,
+        entryNames: "[dir]/[name]",
+        plugins: [],
+    };
+    // console.log(watchBuildOptions);
+    // esbuild.context(watchBuildOptions).then((ctx) => {
+    //   // FIXME: add `await` to ctx.watch
+    //   ctx.watch();
+    // }).catch(err => {
+    //   console.log(err);
+    //   process.exit(1);
+    // });
+}
+else {
+    const config = {
+        bundle: true,
+        outdir: outDir,
+        absWorkingDir: dest,
+        loader: loader,
+        external: externalDirs,
+        logLevel: "silent",
+        minify: true,
+        sourcemap: true,
+        entryNames: "[dir]/[name]-[hash]",
+        plugins: [(0, hanami_esbuild_plugin_1.default)(options)],
+    };
+    // FIXME: add `await` to esbuild.build
+    esbuild_1.default.build({
+        ...config,
+        entryPoints: mappedEntryPoints,
+    }).catch(err => {
+        console.log(err);
+        process.exit(1);
+    });
+}

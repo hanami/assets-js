@@ -63,6 +63,7 @@ const externalEsbuildDirectories = (): string[] => {
 
 const args = parseArgs(argv);
 const dest = process.cwd();
+const watch = args.hasOwnProperty("watch");
 const outDir = path.join(dest, 'public', 'assets');
 const loader: { [ext: string]: Loader } = {
   '.tsx': 'tsx',
@@ -98,24 +99,45 @@ if (args['sri']) {
 }
 
 const options: HanamiEsbuildPluginOptions = { ...defaults, sriAlgorithms: sriAlgorithms };
-const config: Partial<BuildOptions> = {
-  bundle: true,
-  outdir: outDir,
-  absWorkingDir: dest,
-  loader: loader,
-  external: externalDirs,
-  logLevel: "silent",
-  minify: true,
-  sourcemap: true,
-  entryNames: "[dir]/[name]-[hash]",
-  plugins: [hanamiEsbuild(options)],
-}
 
-// FIXME: add `await` to esbuild.build
-esbuild.build({
-  ...config,
-  entryPoints: mappedEntryPoints,
-}).catch(err => {
-  console.log(err);
-  process.exit(1);
-});
+if (watch) {
+  const watchBuildOptions: Partial<BuildOptions> = {
+    ...options,
+    minify: false,
+    sourcemap: false,
+    entryNames: "[dir]/[name]",
+    plugins: [],
+  }
+
+  // console.log(watchBuildOptions);
+
+  // esbuild.context(watchBuildOptions).then((ctx) => {
+  //   // FIXME: add `await` to ctx.watch
+  //   ctx.watch();
+  // }).catch(err => {
+  //   console.log(err);
+  //   process.exit(1);
+  // });
+} else {
+  const config: Partial<BuildOptions> = {
+    bundle: true,
+    outdir: outDir,
+    absWorkingDir: dest,
+    loader: loader,
+    external: externalDirs,
+    logLevel: "silent",
+    minify: true,
+    sourcemap: true,
+    entryNames: "[dir]/[name]-[hash]",
+    plugins: [hanamiEsbuild(options)],
+  }
+
+  // FIXME: add `await` to esbuild.build
+  esbuild.build({
+    ...config,
+    entryPoints: mappedEntryPoints,
+  }).catch(err => {
+      console.log(err);
+      process.exit(1);
+    });
+}

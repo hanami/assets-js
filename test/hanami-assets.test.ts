@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { globSync } from 'glob'
-import { execFileSync, execSync } from 'child_process';
+import { execFileSync, execSync, spawnSync } from 'child_process';
 import crypto from 'node:crypto';
 
 const originalWorkingDir = process.cwd();
@@ -159,6 +159,29 @@ describe('hanami-assets', () => {
         ]
       }
     });
+  });
 
+  test("watch", async () => {
+    const entryPoint = path.join(dest, "app/assets/javascripts/index.js");
+    await fs.writeFile(entryPoint, "console.log('Hello, World!');");
+
+    const appAsset = path.join("public/assets/index.js");
+
+    // const childProcess = spawnSync(binPath, [" --watch"], {cwd: dest});
+    // console.log(binPath);
+    const result = spawnSync(binPath, ["--watch"], {cwd: dest});
+    console.log(result.stdout.toString());
+    await fs.writeFile(entryPoint, "console.log('Hello, Watch!');");
+
+    const appAssetExists = await fs.pathExists(appAsset);
+    expect(appAssetExists).toBe(true);
+
+    // Read the asset file
+    const assetContent = await fs.readFile(appAsset, "utf-8");
+
+    // Check if the asset has the expected contents
+    expect(assetContent).toEqual("console.log('Hello, Watch!');");
+
+    // childProcess.kill("SIGHUP");
   });
 });
