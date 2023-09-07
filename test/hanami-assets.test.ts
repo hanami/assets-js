@@ -1,13 +1,15 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { globSync } from 'glob'
-import { execFileSync, execSync } from 'child_process';
+import { ChildProcess, execFileSync, execSync, spawn } from 'child_process';
 import crypto from 'node:crypto';
 
 const originalWorkingDir = process.cwd();
 const binPath = path.join(originalWorkingDir, 'dist', 'hanami-assets.js');
 
 const dest = path.resolve(__dirname, '..', 'tmp', crypto.randomUUID());
+const watchTimeout = 60000; // ms (60 seconds)
+let watchProcess : ChildProcess;
 
 // Helper function to create a test environment
 async function createTestEnvironment() {
@@ -23,6 +25,10 @@ async function createTestEnvironment() {
 
 // Helper function to clean up the test environment
 async function cleanTestEnvironment() {
+  if (watchProcess) {
+    watchProcess.kill();
+  }
+
   process.chdir(originalWorkingDir);
   await fs.remove(dest); // Comment this line to manually inspect precompile results
 }
@@ -159,6 +165,48 @@ describe('hanami-assets', () => {
         ]
       }
     });
-
   });
+
+  test("watch", async () => {
+    const entryPoint = path.join(dest, "app", "assets", "javascripts", "app.js");
+    await fs.writeFile(entryPoint, "console.log('Hello, World!');");
+
+    const appAsset = path.join(dest, "public", "assets", "app.js");
+
+    watchProcess = spawn(binPath, ["--watch"], {cwd: dest});
+    await fs.writeFile(entryPoint, "console.log('Hello, Watch!');");
+
+    const appAssetExists = (timeout = watchTimeout): Promise<boolean> => {
+      return new Promise((resolve, reject) => {
+        let elapsedTime = 0;
+        const intervalTime = 100;
+
+        const interval = setInterval(() => {
+          if (fs.existsSync(appAsset)) {
+            clearInterval(interval);
+            resolve(true);
+          }
+
+          // console.log("Waiting for asset to be generated...", elapsedTime, dest, appAsset);
+
+          elapsedTime += intervalTime;
+          if (elapsedTime >= timeout) {
+            clearInterval(interval);
+            reject(false);
+          }
+        }, intervalTime);
+      });
+    }
+
+    const found = await appAssetExists();
+    expect(found).toBe(true);
+
+    // Read the asset file
+    const assetContent = await fs.readFile(appAsset, "utf-8");
+
+    // Check if the asset has the expected contents
+    expect(assetContent).toMatch("console.log(\"Hello, Watch!\");");
+
+    // childProcess.kill("SIGHUP");
+  }, watchTimeout + 1000);
 });

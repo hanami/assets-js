@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import fs from 'fs-extra';
 import path from 'path';
 import { globSync } from 'glob'
 import { argv } from 'node:process';
@@ -61,8 +62,18 @@ const externalEsbuildDirectories = (): string[] => {
   }
 };
 
+const touchManifest = (dest: string): void => {
+  const manifestPath = path.join(dest, "public", "assets.json");
+  const manifestDir = path.dirname(manifestPath);
+
+  fs.ensureDirSync(manifestDir);
+
+  fs.writeFileSync(manifestPath, JSON.stringify({}, null, 2));
+}
+
 const args = parseArgs(argv);
 const dest = process.cwd();
+const watch = args.hasOwnProperty("watch");
 const outDir = path.join(dest, 'public', 'assets');
 const loader: { [ext: string]: Loader } = {
   '.tsx': 'tsx',
@@ -98,24 +109,51 @@ if (args['sri']) {
 }
 
 const options: HanamiEsbuildPluginOptions = { ...defaults, sriAlgorithms: sriAlgorithms };
-const config: Partial<BuildOptions> = {
-  bundle: true,
-  outdir: outDir,
-  absWorkingDir: dest,
-  loader: loader,
-  external: externalDirs,
-  logLevel: "silent",
-  minify: true,
-  sourcemap: true,
-  entryNames: "[dir]/[name]-[hash]",
-  plugins: [hanamiEsbuild(options)],
-}
 
-// FIXME: add `await` to esbuild.build
-esbuild.build({
-  ...config,
-  entryPoints: mappedEntryPoints,
-}).catch(err => {
-  console.log(err);
-  process.exit(1);
-});
+if (watch) {
+  touchManifest(dest);
+
+  const watchBuildOptions: Partial<BuildOptions> = {
+    bundle: true,
+    outdir: outDir,
+    absWorkingDir: dest,
+    loader: loader,
+    external: externalDirs,
+    logLevel: "info",
+    minify: false,
+    sourcemap: false,
+    entryNames: "[dir]/[name]",
+    entryPoints: mappedEntryPoints,
+    plugins: [hanamiEsbuild(options)],
+  }
+
+  esbuild.context(watchBuildOptions).then((ctx) => {
+    // FIXME: add `await` to ctx.watch
+    ctx.watch();
+  }).catch(err => {
+    console.log(err);
+    process.exit(1);
+  });
+} else {
+  const config: Partial<BuildOptions> = {
+    bundle: true,
+    outdir: outDir,
+    absWorkingDir: dest,
+    loader: loader,
+    external: externalDirs,
+    logLevel: "silent",
+    minify: true,
+    sourcemap: true,
+    entryNames: "[dir]/[name]-[hash]",
+    plugins: [hanamiEsbuild(options)],
+  }
+
+  // FIXME: add `await` to esbuild.build
+  esbuild.build({
+    ...config,
+    entryPoints: mappedEntryPoints,
+  }).catch(err => {
+      console.log(err);
+      process.exit(1);
+    });
+}
