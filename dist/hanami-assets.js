@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const glob_1 = require("glob");
 const node_process_1 = require("node:process");
@@ -53,6 +54,12 @@ const externalEsbuildDirectories = () => {
         return [];
     }
 };
+const touchManifest = (dest) => {
+    const manifestPath = path_1.default.join(dest, "public", "assets.json");
+    const manifestDir = path_1.default.dirname(manifestPath);
+    fs_extra_1.default.ensureDirSync(manifestDir);
+    fs_extra_1.default.writeFileSync(manifestPath, JSON.stringify({}, null, 2));
+};
 const args = parseArgs(node_process_1.argv);
 const dest = process.cwd();
 const watch = args.hasOwnProperty("watch");
@@ -89,21 +96,27 @@ if (args['sri']) {
 }
 const options = { ...hanami_esbuild_plugin_2.defaults, sriAlgorithms: sriAlgorithms };
 if (watch) {
+    touchManifest(dest);
     const watchBuildOptions = {
-        ...options,
+        bundle: true,
+        outdir: outDir,
+        absWorkingDir: dest,
+        loader: loader,
+        external: externalDirs,
+        logLevel: "info",
         minify: false,
         sourcemap: false,
         entryNames: "[dir]/[name]",
-        plugins: [],
+        entryPoints: mappedEntryPoints,
+        plugins: [(0, hanami_esbuild_plugin_1.default)(options)],
     };
-    // console.log(watchBuildOptions);
-    // esbuild.context(watchBuildOptions).then((ctx) => {
-    //   // FIXME: add `await` to ctx.watch
-    //   ctx.watch();
-    // }).catch(err => {
-    //   console.log(err);
-    //   process.exit(1);
-    // });
+    esbuild_1.default.context(watchBuildOptions).then((ctx) => {
+        // FIXME: add `await` to ctx.watch
+        ctx.watch();
+    }).catch(err => {
+        console.log(err);
+        process.exit(1);
+    });
 }
 else {
     const config = {

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import fs from 'fs-extra';
 import path from 'path';
 import { globSync } from 'glob'
 import { argv } from 'node:process';
@@ -61,6 +62,15 @@ const externalEsbuildDirectories = (): string[] => {
   }
 };
 
+const touchManifest = (dest: string): void => {
+  const manifestPath = path.join(dest, "public", "assets.json");
+  const manifestDir = path.dirname(manifestPath);
+
+  fs.ensureDirSync(manifestDir);
+
+  fs.writeFileSync(manifestPath, JSON.stringify({}, null, 2));
+}
+
 const args = parseArgs(argv);
 const dest = process.cwd();
 const watch = args.hasOwnProperty("watch");
@@ -101,23 +111,29 @@ if (args['sri']) {
 const options: HanamiEsbuildPluginOptions = { ...defaults, sriAlgorithms: sriAlgorithms };
 
 if (watch) {
+  touchManifest(dest);
+
   const watchBuildOptions: Partial<BuildOptions> = {
-    ...options,
+    bundle: true,
+    outdir: outDir,
+    absWorkingDir: dest,
+    loader: loader,
+    external: externalDirs,
+    logLevel: "info",
     minify: false,
     sourcemap: false,
     entryNames: "[dir]/[name]",
-    plugins: [],
+    entryPoints: mappedEntryPoints,
+    plugins: [hanamiEsbuild(options)],
   }
 
-  // console.log(watchBuildOptions);
-
-  // esbuild.context(watchBuildOptions).then((ctx) => {
-  //   // FIXME: add `await` to ctx.watch
-  //   ctx.watch();
-  // }).catch(err => {
-  //   console.log(err);
-  //   process.exit(1);
-  // });
+  esbuild.context(watchBuildOptions).then((ctx) => {
+    // FIXME: add `await` to ctx.watch
+    ctx.watch();
+  }).catch(err => {
+    console.log(err);
+    process.exit(1);
+  });
 } else {
   const config: Partial<BuildOptions> = {
     bundle: true,
