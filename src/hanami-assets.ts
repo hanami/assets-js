@@ -103,16 +103,15 @@ const entryPoints = globSync([
 const entryPointsMatcher = /(app\/assets\/javascripts\/|slices\/(.*\/)assets\/javascripts\/)/
 const mappedEntryPoints = mapEntryPoints(entryPoints);
 const externalDirs = externalEsbuildDirectories();
-var sriAlgorithms = [] as Array<string>;
+var sriAlgorithms : Array<string> = [];
 if (args['sri']) {
   sriAlgorithms = args['sri'].split(',');
 }
 
-const options: HanamiEsbuildPluginOptions = { ...defaults, sriAlgorithms: sriAlgorithms };
-
 if (watch) {
   touchManifest(dest);
 
+  const options: HanamiEsbuildPluginOptions = { ...defaults, hash: false };
   const watchBuildOptions: Partial<BuildOptions> = {
     bundle: true,
     outdir: outDir,
@@ -135,6 +134,7 @@ if (watch) {
     process.exit(1);
   });
 } else {
+  const options: HanamiEsbuildPluginOptions = { ...defaults, sriAlgorithms: sriAlgorithms };
   const config: Partial<BuildOptions> = {
     bundle: true,
     outdir: outDir,

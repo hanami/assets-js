@@ -14,6 +14,7 @@ exports.defaults = {
     destDir: path_1.default.join('public', 'assets'),
     manifestPath: path_1.default.join('public', 'assets.json'),
     sriAlgorithms: [],
+    hash: true,
 };
 const hanamiEsbuild = (options = { ...exports.defaults }) => {
     return {
@@ -41,9 +42,12 @@ const hanamiEsbuild = (options = { ...exports.defaults }) => {
                     return `${algorithm}-${hash}`;
                 };
                 // Inspired by https://github.com/evanw/esbuild/blob/2f2b90a99d626921d25fe6d7d0ca50bd48caa427/internal/bundler/bundler.go#L1057
-                const calculateHash = (hashBytes) => {
-                    const hash = node_crypto_1.default.createHash('sha256').update(hashBytes).digest('hex');
-                    return hash.slice(0, 8).toUpperCase();
+                const calculateHash = (hashBytes, hash) => {
+                    if (!hash) {
+                        return null;
+                    }
+                    const result = node_crypto_1.default.createHash('sha256').update(hashBytes).digest('hex');
+                    return result.slice(0, 8).toUpperCase();
                 };
                 function extractEsbuildInputs(inputData) {
                     const inputs = {};
@@ -57,22 +61,23 @@ const hanamiEsbuild = (options = { ...exports.defaults }) => {
                     }
                     return inputs;
                 }
+                // TODO: profile the current implementation vs blindly copying the asset
                 const copyAsset = (srcPath, destPath) => {
                     if (fs_extra_1.default.existsSync(destPath)) {
                         const srcStat = fs_extra_1.default.statSync(srcPath);
                         const destStat = fs_extra_1.default.statSync(destPath);
+                        // File already exists and is up-to-date, skip copying
                         if (srcStat.mtimeMs <= destStat.mtimeMs) {
-                            // File already exists and is up-to-date, skip copying
-                            return false;
+                            return;
                         }
                     }
                     if (!fs_extra_1.default.existsSync(path_1.default.dirname(destPath))) {
                         fs_extra_1.default.mkdirSync(path_1.default.dirname(destPath), { recursive: true });
                     }
                     fs_extra_1.default.copyFileSync(srcPath, destPath);
-                    return true;
+                    return;
                 };
-                const processAssetDirectory = (pattern, inputs) => {
+                const processAssetDirectory = (pattern, inputs, options) => {
                     const dirPath = path_1.default.dirname(pattern);
                     const files = fs_extra_1.default.readdirSync(dirPath);
                     const assets = [];
@@ -82,19 +87,17 @@ const hanamiEsbuild = (options = { ...exports.defaults }) => {
                         if (inputs.hasOwnProperty(srcPath)) {
                             return;
                         }
-                        const fileHash = calculateHash(fs_extra_1.default.readFileSync(srcPath));
+                        const fileHash = calculateHash(fs_extra_1.default.readFileSync(srcPath), options.hash);
                         const fileExtension = path_1.default.extname(srcPath);
                         const baseName = path_1.default.basename(srcPath, fileExtension);
-                        const destFileName = `${baseName}-${fileHash}${fileExtension}`;
+                        const destFileName = [baseName, fileHash].filter(item => item !== null).join("-") + fileExtension;
                         const destPath = path_1.default.join(options.destDir, path_1.default.relative(dirPath, srcPath).replace(file, destFileName));
                         if (fs_extra_1.default.lstatSync(srcPath).isDirectory()) {
-                            assets.push(...processAssetDirectory(destPath, inputs));
+                            assets.push(...processAssetDirectory(destPath, inputs, options));
                         }
                         else {
-                            const copied = copyAsset(srcPath, destPath);
-                            if (copied) {
-                                assets.push(destPath);
-                            }
+                            copyAsset(srcPath, destPath);
+                            assets.push(destPath);
                         }
                     });
                     return assets;
@@ -105,7 +108,7 @@ const hanamiEsbuild = (options = { ...exports.defaults }) => {
                 const inputs = extractEsbuildInputs(outputs);
                 const copiedAssets = [];
                 externalDirs.forEach((pattern) => {
-                    copiedAssets.push(...processAssetDirectory(pattern, inputs));
+                    copiedAssets.push(...processAssetDirectory(pattern, inputs, options));
                 });
                 const assetsToProcess = Object.keys(outputs).concat(copiedAssets);
                 for (const assetToProcess of assetsToProcess) {

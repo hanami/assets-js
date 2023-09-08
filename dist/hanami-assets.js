@@ -94,9 +94,9 @@ var sriAlgorithms = [];
 if (args['sri']) {
     sriAlgorithms = args['sri'].split(',');
 }
-const options = { ...hanami_esbuild_plugin_2.defaults, sriAlgorithms: sriAlgorithms };
 if (watch) {
     touchManifest(dest);
+    const options = { ...hanami_esbuild_plugin_2.defaults, hash: false };
     const watchBuildOptions = {
         bundle: true,
         outdir: outDir,
@@ -119,6 +119,7 @@ if (watch) {
     });
 }
 else {
+    const options = { ...hanami_esbuild_plugin_2.defaults, sriAlgorithms: sriAlgorithms };
     const config = {
         bundle: true,
         outdir: outDir,
