@@ -168,10 +168,15 @@ describe('hanami-assets', () => {
   });
 
   test("watch", async () => {
+    const images = path.join(dest, "app", "assets", "images");
+    await fs.ensureDir(images);
+    fs.copySync(path.join(__dirname, "fixtures", "todo", "app", "assets", "images", "background.jpg"), path.join(images, "background.jpg"));
+
     const entryPoint = path.join(dest, "app", "assets", "javascripts", "app.js");
     await fs.writeFile(entryPoint, "console.log('Hello, World!');");
 
     const appAsset = path.join(dest, "public", "assets", "app.js");
+    const imageAsset = path.join(dest, "public", "assets", "background.jpg");
 
     watchProcess = spawn(binPath, ["--watch"], {cwd: dest});
     await fs.writeFile(entryPoint, "console.log('Hello, Watch!');");
@@ -187,8 +192,6 @@ describe('hanami-assets', () => {
             resolve(true);
           }
 
-          // console.log("Waiting for asset to be generated...", elapsedTime, dest, appAsset);
-
           elapsedTime += intervalTime;
           if (elapsedTime >= timeout) {
             clearInterval(interval);
@@ -201,11 +204,22 @@ describe('hanami-assets', () => {
     const found = await appAssetExists();
     expect(found).toBe(true);
 
+    expect(fs.existsSync(imageAsset)).toBe(true);
+
     // Read the asset file
     const assetContent = await fs.readFile(appAsset, "utf-8");
 
     // Check if the asset has the expected contents
     expect(assetContent).toMatch("console.log(\"Hello, Watch!\");");
+
+    const manifestExists = await fs.pathExists(path.join(dest, 'public/assets.json'));
+    expect(manifestExists).toBe(true);
+
+    // Read and parse the manifest file
+    const manifestContent = await fs.readFile(path.join(dest, 'public/assets.json'), 'utf-8');
+    const manifest = JSON.parse(manifestContent);
+
+    expect(manifest["background.jpg"]).toEqual({"url": "/assets/background.jpg"})
 
     // childProcess.kill("SIGHUP");
   }, watchTimeout + 1000);

@@ -15,14 +15,16 @@ export interface HanamiEsbuildPluginOptions {
   destDir: string;
   manifestPath: string;
   sriAlgorithms: Array<string>;
+  hash: boolean;
 }
 
-export const defaults: Pick<HanamiEsbuildPluginOptions, 'root' | 'publicDir' | 'destDir' | 'manifestPath' | 'sriAlgorithms'> = {
+export const defaults: Pick<HanamiEsbuildPluginOptions, 'root' | 'publicDir' | 'destDir' | 'manifestPath' | 'sriAlgorithms' | 'hash'> = {
   root: '',
   publicDir: 'public',
   destDir: path.join('public', 'assets'),
   manifestPath: path.join('public', 'assets.json'),
   sriAlgorithms: [],
+  hash: true,
 };
 
 interface Asset {
@@ -65,10 +67,14 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
         }
 
         // Inspired by https://github.com/evanw/esbuild/blob/2f2b90a99d626921d25fe6d7d0ca50bd48caa427/internal/bundler/bundler.go#L1057
-        const calculateHash = (hashBytes: Uint8Array): string => {
-          const hash = crypto.createHash('sha256').update(hashBytes).digest('hex');
+        const calculateHash = (hashBytes: Uint8Array, hash: boolean): string | null => {
+          if (!hash) {
+            return null;
+          }
 
-          return hash.slice(0, 8).toUpperCase();
+          const result = crypto.createHash('sha256').update(hashBytes).digest('hex');
+
+          return result.slice(0, 8).toUpperCase();
         }
 
         function extractEsbuildInputs(inputData: Record<string, any>): Record<string, boolean> {
@@ -87,14 +93,15 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
           return inputs;
         }
 
-        const copyAsset = (srcPath: string, destPath: string): boolean => {
+        // TODO: profile the current implementation vs blindly copying the asset
+        const copyAsset = (srcPath: string, destPath: string): void => {
           if (fs.existsSync(destPath)) {
             const srcStat = fs.statSync(srcPath);
             const destStat = fs.statSync(destPath);
 
+            // File already exists and is up-to-date, skip copying
             if (srcStat.mtimeMs <= destStat.mtimeMs) {
-              // File already exists and is up-to-date, skip copying
-              return false;
+              return;
             }
           }
 
@@ -104,10 +111,10 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
 
           fs.copyFileSync(srcPath, destPath);
 
-          return true;
+          return;
         };
 
-        const processAssetDirectory = (pattern: string, inputs: Record<string, boolean>): string[] => {
+        const processAssetDirectory = (pattern: string, inputs: Record<string, boolean>, options: HanamiEsbuildPluginOptions): string[] => {
           const dirPath = path.dirname(pattern);
           const files = fs.readdirSync(dirPath);
           const assets: string[] = [];
@@ -120,19 +127,17 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
               return;
             }
 
-            const fileHash = calculateHash(fs.readFileSync(srcPath));
+            const fileHash = calculateHash(fs.readFileSync(srcPath), options.hash);
             const fileExtension = path.extname(srcPath);
             const baseName = path.basename(srcPath, fileExtension);
-            const destFileName = `${baseName}-${fileHash}${fileExtension}`;
+            const destFileName = [baseName, fileHash].filter(item => item !== null).join("-") + fileExtension;
             const destPath = path.join(options.destDir, path.relative(dirPath, srcPath).replace(file, destFileName));
 
             if (fs.lstatSync(srcPath).isDirectory()) {
-              assets.push(...processAssetDirectory(destPath, inputs));
+              assets.push(...processAssetDirectory(destPath, inputs, options));
             } else {
-              const copied = copyAsset(srcPath, destPath);
-              if (copied) {
-                assets.push(destPath);
-              }
+              copyAsset(srcPath, destPath);
+              assets.push(destPath);
             }
           });
 
@@ -146,7 +151,7 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
         const inputs = extractEsbuildInputs(outputs);
         const copiedAssets: string[] = [];
         externalDirs.forEach((pattern) => {
-          copiedAssets.push(...processAssetDirectory(pattern, inputs));
+          copiedAssets.push(...processAssetDirectory(pattern, inputs, options));
         });
 
         const assetsToProcess = Object.keys(outputs).concat(copiedAssets);
