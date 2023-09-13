@@ -46,7 +46,7 @@ const externalEsbuildDirectories = (): string[] => {
     path.join("slices", "*", "assets", "*"),
   ]
 
-  const excludeDirs = ['javascripts', 'stylesheets'];
+  const excludeDirs = ['js', 'css'];
 
   try {
     const dirs = globSync(assetDirsPattern, { nodir: false });
@@ -95,12 +95,12 @@ const loader: { [ext: string]: Loader } = {
 
 const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
 const entryPoints = globSync([
-  path.join("app", "assets", "javascripts", "**", entryPointExtensions),
-  path.join("slices", "*", "assets", "javascripts", "**", entryPointExtensions),
+  path.join("app", "assets", "js", "**", entryPointExtensions),
+  path.join("slices", "*", "assets", "js", "**", entryPointExtensions),
 ]);
 
 // FIXME: make cross platform
-const entryPointsMatcher = /(app\/assets\/javascripts\/|slices\/(.*\/)assets\/javascripts\/)/
+const entryPointsMatcher = /(app\/assets\/js\/|slices\/(.*\/)assets\/js\/)/
 const mappedEntryPoints = mapEntryPoints(entryPoints);
 const externalDirs = externalEsbuildDirectories();
 var sriAlgorithms : Array<string> = [];

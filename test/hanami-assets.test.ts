@@ -9,15 +9,15 @@ const binPath = path.join(originalWorkingDir, 'dist', 'hanami-assets.js');
 
 const dest = path.resolve(__dirname, '..', 'tmp', crypto.randomUUID());
 const watchTimeout = 60000; // ms (60 seconds)
-let watchProcess : ChildProcess;
+let watchProcess: ChildProcess;
 
 // Helper function to create a test environment
 async function createTestEnvironment() {
   // Create temporary directories
-  await fs.ensureDir(path.join(dest, 'app/assets/javascripts'));
+  await fs.ensureDir(path.join(dest, 'app/assets/js'));
   await fs.ensureDir(path.join(dest, 'app/assets/images'));
-  await fs.ensureDir(path.join(dest, 'slices/admin/assets/javascripts'));
-  await fs.ensureDir(path.join(dest, 'slices/metrics/assets/javascripts'));
+  await fs.ensureDir(path.join(dest, 'slices/admin/assets/js'));
+  await fs.ensureDir(path.join(dest, 'slices/metrics/assets/js'));
   await fs.ensureDir(path.join(dest, 'public'));
 
   process.chdir(dest);
@@ -43,9 +43,9 @@ describe('hanami-assets', () => {
   });
 
   test('copies assets from app/assets to public/assets and generates a manifest file', async () => {
-    const entryPoint1 = path.join(dest, 'app/assets/javascripts/app.js');
-    const entryPoint2 = path.join(dest, 'slices/admin/assets/javascripts/app.js');
-    const entryPoint3 = path.join(dest, 'slices/metrics/assets/javascripts/app.ts');
+    const entryPoint1 = path.join(dest, 'app/assets/js/app.js');
+    const entryPoint2 = path.join(dest, 'slices/admin/assets/js/app.js');
+    const entryPoint3 = path.join(dest, 'slices/metrics/assets/js/app.ts');
     await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
     await fs.writeFile(entryPoint2, "console.log('Hello, Admin!');");
     await fs.writeFile(entryPoint3, "console.log('Hello, Metrics!');");
@@ -77,19 +77,19 @@ describe('hanami-assets', () => {
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "admin/app.js": {
-        "url": "/assets/admin/app-G3TTFD5I.js"
+        "url": "/assets/admin/app-NLRESL5A.js",
       },
       "app.js": {
-        "url": "/assets/app-SMJS4SYG.js"
+        "url": "/assets/app-JLSTK5SN.js",
       },
       "metrics/app.js": {
-        "url": "/assets/metrics/app-62A4ZWTV.js"
-      },
+        "url": "/assets/metrics/app-27Z7ZALS.js",
+      }
     });
   });
 
   test('generates SRI', async () => {
-    const entryPoint1 = path.join(dest, 'app/assets/javascripts/app.js');
+    const entryPoint1 = path.join(dest, 'app/assets/js/app.js');
     await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
 
     execFileSync(binPath, ['--sri=sha256,sha384,sha512'], { stdio: "inherit" })
@@ -101,11 +101,11 @@ describe('hanami-assets', () => {
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "app.js": {
-        "url": "/assets/app-SMJS4SYG.js",
+        "url": "/assets/app-JLSTK5SN.js",
         "sri": [
-          "sha256-NXy3RVHksHBJVqQXCvl4bXhNrOLPyI6JY6aQwwscD3s=",
-          "sha384-QJusYGV1R3duafMvNtieaCc3dWSULtYdTItexlRLPkpSbxdPLOtv7cDIt4xOtpTP",
-          "sha512-Yer6vTccJNUWJaKZ54hAmwUSmjqfhFLyR/dXLQz0jlNAOCVw40+bSBBvWZCJOzRm8MYmqzElLdA7z2yeGPpVFg==",
+          "sha256-p4j9argOiwyiBIBi7v4H0WUnv6z3kmFjqmManMEJXfo=",
+          "sha384-gkA54jmSv7TBjiSzGrfO/uCR5CyUrQSUSUYrnM0lICIaP5ppqcN8PLVE3mNj87sN",
+          "sha512-ZCJAQgHAxcBP7xEuQ3W/pZqqI611aX9oEk0QvDG4Etq6bkvxQMWHrHk2npCytWchOTN1yKM7TLj9Vsp1Id0j6g=="
         ]
       },
     });
@@ -123,9 +123,9 @@ describe('hanami-assets', () => {
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "app.js": {
-        "url": "/assets/app-F66C5HBN.js",
+        "url": "/assets/app-QMPF4E7L.js",
         "sri": [
-          "sha384-HyjZlrfiFrDd3kcjk++Tkbv908eTWAXXMu6Nha8liVSuH9gr+3fG4OrYYBLY/iiw"
+          "sha384-k/bXXyKadrRJgpY1dFmJgeHONHtO6HE+SxDgP1jgtYQ0NazikfTc3fDCqUfrOr8Z"
         ]
       },
       "background.jpg": {
@@ -135,21 +135,21 @@ describe('hanami-assets', () => {
         ]
       },
       "app.css": {
-        "url": "/assets/app-ISMEPBMJ.css",
+        "url": "/assets/app-REBB4IZN.css",
         "sri": [
-          "sha384-XI8KeiPqBbtxWX3JvD4OIos7cNGNHIPL8/MteaUxGWLS+Yp/nkE1fb4M9Gc2tvN2"
+          "sha384-ZqNcOOnG1W+Udcquy7qBs4b51X1cq8Bkv0CMEIt5I20+TWmW33pLUHl54ueCnyFD"
         ]
       },
       "login/app.js": {
-        "url": "/assets/login/app-FUSCFK37.js",
+        "url": "/assets/login/app-SV7Q442Q.js",
         "sri": [
-          "sha384-Wj7sxFDKOiC2c2nPfyDRvBHKG0LiwNiQYkoSKHD/COISJbiAlSLNwHhm0FGR8+KB"
+          "sha384-fkk3ZtSsrBOPtmKaOSoHC5IKdaphOeG05j0Z3iQPrJdbQAxsAmCkJMNQphDyL8E2"
         ]
       },
       "admin/app.js": {
-        "url": "/assets/admin/app-3ROSYITC.js",
+        "url": "/assets/admin/app-XJBJOVJT.js",
         "sri": [
-          "sha384-DoWFNj0ynI1lJUvCY2R1DMBIoF10HoKT08ya5at4/jlGOOgPwWYfu0RF9Sq+Kcne"
+          "sha384-aqVgGQ+qnJfgFqVoOlHBEEQ1eUtNDN5cQu9EdUW7gIGT9VaUN8H2yw5ai+lW+jc9"
         ]
       },
       "font.otf": {
@@ -172,13 +172,13 @@ describe('hanami-assets', () => {
     await fs.ensureDir(images);
     fs.copySync(path.join(__dirname, "fixtures", "todo", "app", "assets", "images", "background.jpg"), path.join(images, "background.jpg"));
 
-    const entryPoint = path.join(dest, "app", "assets", "javascripts", "app.js");
+    const entryPoint = path.join(dest, "app", "assets", "js", "app.js");
     await fs.writeFile(entryPoint, "console.log('Hello, World!');");
 
     const appAsset = path.join(dest, "public", "assets", "app.js");
     const imageAsset = path.join(dest, "public", "assets", "background.jpg");
 
-    watchProcess = spawn(binPath, ["--watch"], {cwd: dest});
+    watchProcess = spawn(binPath, ["--watch"], { cwd: dest });
     await fs.writeFile(entryPoint, "console.log('Hello, Watch!');");
 
     const appAssetExists = (timeout = watchTimeout): Promise<boolean> => {
@@ -219,7 +219,7 @@ describe('hanami-assets', () => {
     const manifestContent = await fs.readFile(path.join(dest, 'public/assets.json'), 'utf-8');
     const manifest = JSON.parse(manifestContent);
 
-    expect(manifest["background.jpg"]).toEqual({"url": "/assets/background.jpg"})
+    expect(manifest["background.jpg"]).toEqual({ "url": "/assets/background.jpg" })
 
     // childProcess.kill("SIGHUP");
   }, watchTimeout + 1000);
