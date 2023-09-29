@@ -1,7 +1,7 @@
 {
   "name": "hanami-assets",
-  "version": "1.0.0",
-  "description": "",
+  "version": "2.1.0.beta2",
+  "description": "Hanami Assets management via Esbuild",
   "bin": {
     "hanami-assets": "dist/hanami-assets.js"
   },
@@ -11,9 +11,24 @@
     "build": "tsc",
     "test": "jest"
   },
-  "keywords": [],
+  "keywords": [
+    "hanami",
+    "assets",
+    "web",
+    "build",
+    "esbuild",
+    "plugin"
+  ],
   "author": "Hanami Team",
   "license": "MIT",
+  "homepage": "https://hanamirb.org",
+  "repository": "github:hanami/assets-js",
+  "bugs": {
+    "url": "https://github.com/hanami/assets-js/issues"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/hanami"
+  },
   "devDependencies": {
     "@jest/globals": "^29.6.1",
     "@types/fs-extra": "^11.0.1",
