@@ -1,6 +1,6 @@
 {
   "name": "hanami-assets",
-  "version": "2.1.0-beta.2",
+  "version": "2.1.0-beta.1",
   "description": "Hanami Assets management via Esbuild",
   "bin": {
     "hanami-assets": "dist/hanami-assets.js"
