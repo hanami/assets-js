@@ -3,3 +3,4 @@ export declare const loader: {
     [ext: string]: Loader;
 };
 export declare const findEntryPoints: (root: string) => Record<string, string>;
+export declare const externalDirectories: () => string[];

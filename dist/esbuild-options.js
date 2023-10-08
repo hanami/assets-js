@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findEntryPoints = exports.loader = void 0;
+exports.externalDirectories = exports.findEntryPoints = exports.loader = void 0;
 const path_1 = __importDefault(require("path"));
 const glob_1 = require("glob");
 exports.loader = {
@@ -48,3 +48,24 @@ const findEntryPoints = (root) => {
     return result;
 };
 exports.findEntryPoints = findEntryPoints;
+// TODO: feels like this really should be passed a root too, to become the cwd for globSync
+const externalDirectories = () => {
+    const assetDirsPattern = [
+        path_1.default.join("app", "assets", "*"),
+        path_1.default.join("slices", "*", "assets", "*"),
+    ];
+    const excludeDirs = ['js', 'css'];
+    try {
+        const dirs = (0, glob_1.globSync)(assetDirsPattern, { nodir: false });
+        const filteredDirs = dirs.filter((dir) => {
+            const dirName = dir.split(path_1.default.sep).pop();
+            return !excludeDirs.includes(dirName);
+        });
+        return filteredDirs.map((dir) => path_1.default.join(dir, "*"));
+    }
+    catch (err) {
+        console.error('Error listing external directories:', err);
+        return [];
+    }
+};
+exports.externalDirectories = externalDirectories;

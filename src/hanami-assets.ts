@@ -2,11 +2,10 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import { globSync } from 'glob'
 import { argv } from 'node:process';
 import esbuild, { BuildOptions, Loader } from 'esbuild';
 import hanamiEsbuild from './hanami-esbuild-plugin';
-import { loader, findEntryPoints } from './esbuild-options';
+import { loader, findEntryPoints, externalDirectories } from './esbuild-options';
 import { HanamiEsbuildPluginOptions, defaults } from './hanami-esbuild-plugin';
 
 const parseArgs = (args: Array<string>): Record<string, string> => {
@@ -19,28 +18,6 @@ const parseArgs = (args: Array<string>): Record<string, string> => {
 
   return result;
 }
-
-const externalEsbuildDirectories = (): string[] => {
-  const assetDirsPattern = [
-    path.join("app", "assets", "*"),
-    path.join("slices", "*", "assets", "*"),
-  ]
-
-  const excludeDirs = ['js', 'css'];
-
-  try {
-    const dirs = globSync(assetDirsPattern, { nodir: false });
-    const filteredDirs = dirs.filter((dir) => {
-      const dirName = dir.split(path.sep).pop();
-      return !excludeDirs.includes(dirName!);
-    });
-
-    return filteredDirs.map((dir) => path.join(dir, "*"));
-  } catch (err) {
-    console.error('Error listing external directories:', err);
-    return [];
-  }
-};
 
 const touchManifest = (dest: string): void => {
   const manifestPath = path.join(dest, "public", "assets.json");
@@ -56,8 +33,7 @@ const dest = process.cwd();
 const watch = args.hasOwnProperty("watch");
 const outDir = path.join(dest, 'public', 'assets');
 const entryPoints = findEntryPoints(dest)
-
-const externalDirs = externalEsbuildDirectories();
+const externalDirs = externalDirectories();
 var sriAlgorithms : Array<string> = [];
 if (args['sri']) {
   sriAlgorithms = args['sri'].split(',');

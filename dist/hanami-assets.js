@@ -6,7 +6,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
-const glob_1 = require("glob");
 const node_process_1 = require("node:process");
 const esbuild_1 = __importDefault(require("esbuild"));
 const hanami_esbuild_plugin_1 = __importDefault(require("./hanami-esbuild-plugin"));
@@ -20,25 +19,6 @@ const parseArgs = (args) => {
     });
     return result;
 };
-const externalEsbuildDirectories = () => {
-    const assetDirsPattern = [
-        path_1.default.join("app", "assets", "*"),
-        path_1.default.join("slices", "*", "assets", "*"),
-    ];
-    const excludeDirs = ['js', 'css'];
-    try {
-        const dirs = (0, glob_1.globSync)(assetDirsPattern, { nodir: false });
-        const filteredDirs = dirs.filter((dir) => {
-            const dirName = dir.split(path_1.default.sep).pop();
-            return !excludeDirs.includes(dirName);
-        });
-        return filteredDirs.map((dir) => path_1.default.join(dir, "*"));
-    }
-    catch (err) {
-        console.error('Error listing external directories:', err);
-        return [];
-    }
-};
 const touchManifest = (dest) => {
     const manifestPath = path_1.default.join(dest, "public", "assets.json");
     const manifestDir = path_1.default.dirname(manifestPath);
@@ -50,7 +30,7 @@ const dest = process.cwd();
 const watch = args.hasOwnProperty("watch");
 const outDir = path_1.default.join(dest, 'public', 'assets');
 const entryPoints = (0, esbuild_options_1.findEntryPoints)(dest);
-const externalDirs = externalEsbuildDirectories();
+const externalDirs = (0, esbuild_options_1.externalDirectories)();
 var sriAlgorithms = [];
 if (args['sri']) {
     sriAlgorithms = args['sri'].split(',');
