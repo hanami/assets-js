@@ -4,9 +4,9 @@ import fs from 'fs-extra';
 import path from 'path';
 import { argv } from 'node:process';
 import esbuild from 'esbuild';
-import { buildOptions, watchOptions } from './esbuild-options';
+import { buildOptions, watchOptions } from './esbuild';
 
-const parseArgs = (args: Array<string>): Record<string, string> => {
+export const parseArgs = (args: Array<string>): Record<string, string> => {
   const result: Record<string, string> = {};
 
   args.slice(2).forEach((arg) => {
@@ -17,8 +17,8 @@ const parseArgs = (args: Array<string>): Record<string, string> => {
   return result;
 }
 
-const touchManifest = (dest: string): void => {
-  const manifestPath = path.join(dest, "public", "assets.json");
+export const touchManifest = (root: string): void => {
+  const manifestPath = path.join(root, "public", "assets.json");
   const manifestDir = path.dirname(manifestPath);
 
   fs.ensureDirSync(manifestDir);
