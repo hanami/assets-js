@@ -60,23 +60,9 @@ if (watch) {
     });
 }
 else {
-    const options = { ...hanami_esbuild_plugin_2.defaults, sriAlgorithms: sriAlgorithms };
-    const config = {
-        bundle: true,
-        outdir: outDir,
-        absWorkingDir: dest,
-        loader: esbuild_options_1.loader,
-        external: externalDirs,
-        logLevel: "silent",
-        minify: true,
-        sourcemap: true,
-        entryNames: "[dir]/[name]-[hash]",
-        entryPoints: entryPoints,
-        plugins: [(0, hanami_esbuild_plugin_1.default)(options)],
-    };
     // FIXME: add `await` to esbuild.build
     esbuild_1.default.build({
-        ...config,
+        ...(0, esbuild_options_1.buildOptions)(dest, args),
     }).catch(err => {
         console.log(err);
         process.exit(1);

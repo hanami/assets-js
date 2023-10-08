@@ -1,6 +1,7 @@
 import path from "path";
 import { globSync } from "glob";
-import { Loader } from "esbuild";
+import { BuildOptions, Loader } from "esbuild";
+import hanamiEsbuild, { HanamiEsbuildPluginOptions, defaults } from './hanami-esbuild-plugin';
 
 export const loader: { [ext: string]: Loader } = {
   '.tsx': 'tsx',
@@ -74,4 +75,32 @@ export const externalDirectories = (): string[] => {
   }
 };
 
+export const buildOptions = (root: string, args: Record<string, string>): Partial<BuildOptions> => {
+  var sriAlgorithms : Array<string> = [];
+  if (args['sri']) {
+    sriAlgorithms = args['sri'].split(',');
+  }
+
+  const pluginOptions: HanamiEsbuildPluginOptions = {
+    ...defaults,
+    sriAlgorithms: sriAlgorithms
+  };
+  const plugin = hanamiEsbuild(pluginOptions)
+
+  const options: Partial<BuildOptions> = {
+    bundle: true,
+    outdir: path.join(root, "public", "assets"),
+    absWorkingDir: root,
+    loader: loader,
+    external: externalDirectories(),
+    logLevel: "silent",
+    minify: true,
+    sourcemap: true,
+    entryNames: "[dir]/[name]-[hash]",
+    entryPoints: findEntryPoints(root),
+    plugins: [plugin],
+  }
+
+  return options;
+}
 

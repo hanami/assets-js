@@ -3,9 +3,9 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { argv } from 'node:process';
-import esbuild, { BuildOptions, Loader } from 'esbuild';
+import esbuild, { BuildOptions } from 'esbuild';
 import hanamiEsbuild from './hanami-esbuild-plugin';
-import { loader, findEntryPoints, externalDirectories } from './esbuild-options';
+import { buildOptions, loader, findEntryPoints, externalDirectories } from './esbuild-options';
 import { HanamiEsbuildPluginOptions, defaults } from './hanami-esbuild-plugin';
 
 const parseArgs = (args: Array<string>): Record<string, string> => {
@@ -65,24 +65,9 @@ if (watch) {
     process.exit(1);
   });
 } else {
-  const options: HanamiEsbuildPluginOptions = { ...defaults, sriAlgorithms: sriAlgorithms };
-  const config: Partial<BuildOptions> = {
-    bundle: true,
-    outdir: outDir,
-    absWorkingDir: dest,
-    loader: loader,
-    external: externalDirs,
-    logLevel: "silent",
-    minify: true,
-    sourcemap: true,
-    entryNames: "[dir]/[name]-[hash]",
-    entryPoints: entryPoints,
-    plugins: [hanamiEsbuild(options)],
-  }
-
   // FIXME: add `await` to esbuild.build
   esbuild.build({
-    ...config,
+    ...buildOptions(dest, args),
   }).catch(err => {
       console.log(err);
       process.exit(1);
