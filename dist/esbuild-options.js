@@ -26,11 +26,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildOptions = exports.externalDirectories = exports.findEntryPoints = exports.loader = void 0;
+exports.watchOptions = exports.buildOptions = void 0;
 const path_1 = __importDefault(require("path"));
 const glob_1 = require("glob");
 const hanami_esbuild_plugin_1 = __importStar(require("./hanami-esbuild-plugin"));
-exports.loader = {
+const loader = {
     '.tsx': 'tsx',
     '.ts': 'ts',
     '.js': 'js',
@@ -71,7 +71,6 @@ const findEntryPoints = (root) => {
     });
     return result;
 };
-exports.findEntryPoints = findEntryPoints;
 // TODO: feels like this really should be passed a root too, to become the cwd for globSync
 const externalDirectories = () => {
     const assetDirsPattern = [
@@ -92,7 +91,8 @@ const externalDirectories = () => {
         return [];
     }
 };
-exports.externalDirectories = externalDirectories;
+// TODO: make args a real type
+// TODO: reuse the logic between these two methods below
 const buildOptions = (root, args) => {
     var sriAlgorithms = [];
     if (args['sri']) {
@@ -107,15 +107,37 @@ const buildOptions = (root, args) => {
         bundle: true,
         outdir: path_1.default.join(root, "public", "assets"),
         absWorkingDir: root,
-        loader: exports.loader,
-        external: (0, exports.externalDirectories)(),
+        loader: loader,
+        external: externalDirectories(),
         logLevel: "silent",
         minify: true,
         sourcemap: true,
         entryNames: "[dir]/[name]-[hash]",
-        entryPoints: (0, exports.findEntryPoints)(root),
+        entryPoints: findEntryPoints(root),
         plugins: [plugin],
     };
     return options;
 };
 exports.buildOptions = buildOptions;
+const watchOptions = (root, args) => {
+    const pluginOptions = {
+        ...hanami_esbuild_plugin_1.defaults,
+        hash: false
+    };
+    const plugin = (0, hanami_esbuild_plugin_1.default)(pluginOptions);
+    const options = {
+        bundle: true,
+        outdir: path_1.default.join(root, "public", "assets"),
+        absWorkingDir: root,
+        loader: loader,
+        external: externalDirectories(),
+        logLevel: "info",
+        minify: false,
+        sourcemap: false,
+        entryNames: "[dir]/[name]",
+        entryPoints: findEntryPoints(root),
+        plugins: [plugin],
+    };
+    return options;
+};
+exports.watchOptions = watchOptions;

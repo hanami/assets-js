@@ -8,9 +8,7 @@ const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const node_process_1 = require("node:process");
 const esbuild_1 = __importDefault(require("esbuild"));
-const hanami_esbuild_plugin_1 = __importDefault(require("./hanami-esbuild-plugin"));
 const esbuild_options_1 = require("./esbuild-options");
-const hanami_esbuild_plugin_2 = require("./hanami-esbuild-plugin");
 const parseArgs = (args) => {
     const result = {};
     args.slice(2).forEach((arg) => {
@@ -26,32 +24,11 @@ const touchManifest = (dest) => {
     fs_extra_1.default.writeFileSync(manifestPath, JSON.stringify({}, null, 2));
 };
 const args = parseArgs(node_process_1.argv);
-const dest = process.cwd();
 const watch = args.hasOwnProperty("watch");
-const outDir = path_1.default.join(dest, 'public', 'assets');
-const entryPoints = (0, esbuild_options_1.findEntryPoints)(dest);
-const externalDirs = (0, esbuild_options_1.externalDirectories)();
-var sriAlgorithms = [];
-if (args['sri']) {
-    sriAlgorithms = args['sri'].split(',');
-}
+const root = process.cwd();
 if (watch) {
-    touchManifest(dest);
-    const options = { ...hanami_esbuild_plugin_2.defaults, hash: false };
-    const watchBuildOptions = {
-        bundle: true,
-        outdir: outDir,
-        absWorkingDir: dest,
-        loader: esbuild_options_1.loader,
-        external: externalDirs,
-        logLevel: "info",
-        minify: false,
-        sourcemap: false,
-        entryNames: "[dir]/[name]",
-        entryPoints: entryPoints,
-        plugins: [(0, hanami_esbuild_plugin_1.default)(options)],
-    };
-    esbuild_1.default.context(watchBuildOptions).then((ctx) => {
+    touchManifest(root);
+    esbuild_1.default.context((0, esbuild_options_1.watchOptions)(root, args)).then((ctx) => {
         // FIXME: add `await` to ctx.watch
         ctx.watch();
     }).catch(err => {
@@ -62,7 +39,7 @@ if (watch) {
 else {
     // FIXME: add `await` to esbuild.build
     esbuild_1.default.build({
-        ...(0, esbuild_options_1.buildOptions)(dest, args),
+        ...(0, esbuild_options_1.buildOptions)(root, args),
     }).catch(err => {
         console.log(err);
         process.exit(1);

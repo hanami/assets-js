@@ -3,7 +3,7 @@ import { globSync } from "glob";
 import { BuildOptions, Loader } from "esbuild";
 import hanamiEsbuild, { HanamiEsbuildPluginOptions, defaults } from './hanami-esbuild-plugin';
 
-export const loader: { [ext: string]: Loader } = {
+const loader: { [ext: string]: Loader } = {
   '.tsx': 'tsx',
   '.ts': 'ts',
   '.js': 'js',
@@ -25,7 +25,7 @@ const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
 // FIXME: make cross platform
 const entryPointsMatcher = /(app\/assets\/js\/|slices\/(.*\/)assets\/js\/)/
 
-export const findEntryPoints = (root: string): Record<string, string> => {
+const findEntryPoints = (root: string): Record<string, string> => {
   const result: Record<string, string> = {};
 
   // TODO: should this be done explicitly within the root?
@@ -53,7 +53,7 @@ export const findEntryPoints = (root: string): Record<string, string> => {
 }
 
 // TODO: feels like this really should be passed a root too, to become the cwd for globSync
-export const externalDirectories = (): string[] => {
+const externalDirectories = (): string[] => {
   const assetDirsPattern = [
     path.join("app", "assets", "*"),
     path.join("slices", "*", "assets", "*"),
@@ -75,6 +75,8 @@ export const externalDirectories = (): string[] => {
   }
 };
 
+// TODO: make args a real type
+// TODO: reuse the logic between these two methods below
 export const buildOptions = (root: string, args: Record<string, string>): Partial<BuildOptions> => {
   var sriAlgorithms : Array<string> = [];
   if (args['sri']) {
@@ -97,6 +99,30 @@ export const buildOptions = (root: string, args: Record<string, string>): Partia
     minify: true,
     sourcemap: true,
     entryNames: "[dir]/[name]-[hash]",
+    entryPoints: findEntryPoints(root),
+    plugins: [plugin],
+  }
+
+  return options;
+};
+
+export const watchOptions = (root: string, args: Record<string, string>): Partial<BuildOptions> => {
+  const pluginOptions: HanamiEsbuildPluginOptions = {
+    ...defaults,
+    hash: false
+  };
+  const plugin = hanamiEsbuild(pluginOptions)
+
+  const options: Partial<BuildOptions> = {
+    bundle: true,
+    outdir: path.join(root, "public", "assets"),
+    absWorkingDir: root,
+    loader: loader,
+    external: externalDirectories(),
+    logLevel: "info",
+    minify: false,
+    sourcemap: false,
+    entryNames: "[dir]/[name]",
     entryPoints: findEntryPoints(root),
     plugins: [plugin],
   }

@@ -3,10 +3,8 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { argv } from 'node:process';
-import esbuild, { BuildOptions } from 'esbuild';
-import hanamiEsbuild from './hanami-esbuild-plugin';
-import { buildOptions, loader, findEntryPoints, externalDirectories } from './esbuild-options';
-import { HanamiEsbuildPluginOptions, defaults } from './hanami-esbuild-plugin';
+import esbuild from 'esbuild';
+import { buildOptions, watchOptions } from './esbuild-options';
 
 const parseArgs = (args: Array<string>): Record<string, string> => {
   const result: Record<string, string> = {};
@@ -29,35 +27,13 @@ const touchManifest = (dest: string): void => {
 }
 
 const args = parseArgs(argv);
-const dest = process.cwd();
 const watch = args.hasOwnProperty("watch");
-const outDir = path.join(dest, 'public', 'assets');
-const entryPoints = findEntryPoints(dest)
-const externalDirs = externalDirectories();
-var sriAlgorithms : Array<string> = [];
-if (args['sri']) {
-  sriAlgorithms = args['sri'].split(',');
-}
+const root = process.cwd();
 
 if (watch) {
-  touchManifest(dest);
+  touchManifest(root);
 
-  const options: HanamiEsbuildPluginOptions = { ...defaults, hash: false };
-  const watchBuildOptions: Partial<BuildOptions> = {
-    bundle: true,
-    outdir: outDir,
-    absWorkingDir: dest,
-    loader: loader,
-    external: externalDirs,
-    logLevel: "info",
-    minify: false,
-    sourcemap: false,
-    entryNames: "[dir]/[name]",
-    entryPoints: entryPoints,
-    plugins: [hanamiEsbuild(options)],
-  }
-
-  esbuild.context(watchBuildOptions).then((ctx) => {
+  esbuild.context(watchOptions(root, args)).then((ctx) => {
     // FIXME: add `await` to ctx.watch
     ctx.watch();
   }).catch(err => {
@@ -67,9 +43,9 @@ if (watch) {
 } else {
   // FIXME: add `await` to esbuild.build
   esbuild.build({
-    ...buildOptions(dest, args),
+    ...buildOptions(root, args),
   }).catch(err => {
-      console.log(err);
-      process.exit(1);
-    });
+    console.log(err);
+    process.exit(1);
+  });
 }
