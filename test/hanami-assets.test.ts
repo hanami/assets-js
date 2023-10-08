@@ -123,9 +123,9 @@ describe('hanami-assets', () => {
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "app.js": {
-        "url": "/assets/app-QMPF4E7L.js",
+        "url": "/assets/app-QFCHLRMD.js",
         "sri": [
-          "sha384-k/bXXyKadrRJgpY1dFmJgeHONHtO6HE+SxDgP1jgtYQ0NazikfTc3fDCqUfrOr8Z"
+          "sha384-tn8zwUHIJjEPGmD6vZ2DKmY6LlbNkI86ltpSiBxcCICkETm5g4sMDV0oF2I+8xDz"
         ]
       },
       "background.jpg": {

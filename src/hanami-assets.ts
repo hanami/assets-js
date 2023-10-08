@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { argv } from 'node:process';
 import esbuild from 'esbuild';
-import { buildOptions, watchOptions } from './esbuild';
+import { buildOptions, watchOptions } from './esbuild.js';
 
 export const parseArgs = (args: Array<string>): Record<string, string> => {
   const result: Record<string, string> = {};
@@ -25,6 +25,8 @@ export const touchManifest = (root: string): void => {
 
   fs.writeFileSync(manifestPath, JSON.stringify({}, null, 2));
 }
+
+export * from "./esbuild.js";
 
 const args = parseArgs(argv);
 const watch = args.hasOwnProperty("watch");
