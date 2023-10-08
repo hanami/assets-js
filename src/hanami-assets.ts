@@ -6,6 +6,7 @@ import { globSync } from 'glob'
 import { argv } from 'node:process';
 import esbuild, { BuildOptions, Loader } from 'esbuild';
 import hanamiEsbuild from './hanami-esbuild-plugin';
+import { loader, findEntryPoints } from './esbuild-options';
 import { HanamiEsbuildPluginOptions, defaults } from './hanami-esbuild-plugin';
 
 const parseArgs = (args: Array<string>): Record<string, string> => {
@@ -14,27 +15,6 @@ const parseArgs = (args: Array<string>): Record<string, string> => {
   args.slice(2).forEach((arg) => {
     const [key, value] = arg.replace(/^--/, '').split('=');
     result[key] = value;
-  });
-
-  return result;
-}
-
-const mapEntryPoints = (entryPoints: string[]): Record<string, string> => {
-  const result: Record<string, string> = {};
-
-  entryPoints.forEach((entryPoint) => {
-    let modifiedPath = entryPoint.replace(entryPointsMatcher, "$2")
-    const relativePath = path.relative(dest, modifiedPath)
-
-    const { dir, name } = path.parse(relativePath)
-
-    if (dir) {
-      modifiedPath = path.join(dir, name)
-    } else {
-      modifiedPath = name
-    }
-
-    result[modifiedPath] = entryPoint
   });
 
   return result;
@@ -75,33 +55,8 @@ const args = parseArgs(argv);
 const dest = process.cwd();
 const watch = args.hasOwnProperty("watch");
 const outDir = path.join(dest, 'public', 'assets');
-const loader: { [ext: string]: Loader } = {
-  '.tsx': 'tsx',
-  '.ts': 'ts',
-  '.js': 'js',
-  '.jsx': 'jsx',
-  '.json': 'json',
-  '.png': 'file',
-  '.jpg': 'file',
-  '.jpeg': 'file',
-  '.gif': 'file',
-  '.svg': 'file',
-  '.woff': 'file',
-  '.woff2': 'file',
-  '.otf': 'file',
-  '.eot': 'file',
-  '.ttf': 'file',
-};
+const entryPoints = findEntryPoints(dest)
 
-const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
-const entryPoints = globSync([
-  path.join("app", "assets", "js", "**", entryPointExtensions),
-  path.join("slices", "*", "assets", "js", "**", entryPointExtensions),
-]);
-
-// FIXME: make cross platform
-const entryPointsMatcher = /(app\/assets\/js\/|slices\/(.*\/)assets\/js\/)/
-const mappedEntryPoints = mapEntryPoints(entryPoints);
 const externalDirs = externalEsbuildDirectories();
 var sriAlgorithms : Array<string> = [];
 if (args['sri']) {
@@ -122,7 +77,7 @@ if (watch) {
     minify: false,
     sourcemap: false,
     entryNames: "[dir]/[name]",
-    entryPoints: mappedEntryPoints,
+    entryPoints: entryPoints,
     plugins: [hanamiEsbuild(options)],
   }
 
@@ -145,13 +100,13 @@ if (watch) {
     minify: true,
     sourcemap: true,
     entryNames: "[dir]/[name]-[hash]",
+    entryPoints: entryPoints,
     plugins: [hanamiEsbuild(options)],
   }
 
   // FIXME: add `await` to esbuild.build
   esbuild.build({
     ...config,
-    entryPoints: mappedEntryPoints,
   }).catch(err => {
       console.log(err);
       process.exit(1);
