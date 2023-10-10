@@ -2,29 +2,29 @@ import path from "path";
 import { globSync } from "glob";
 import { BuildOptions, Loader } from "esbuild";
 import { Args } from "./args.js";
-import hanamiEsbuild, { HanamiEsbuildPluginOptions, defaults } from './hanami-esbuild-plugin.js';
+import hanamiEsbuild, { HanamiEsbuildPluginOptions, defaults } from "./hanami-esbuild-plugin.js";
 
 const loader: { [ext: string]: Loader } = {
-  '.tsx': 'tsx',
-  '.ts': 'ts',
-  '.js': 'js',
-  '.jsx': 'jsx',
-  '.json': 'json',
-  '.png': 'file',
-  '.jpg': 'file',
-  '.jpeg': 'file',
-  '.gif': 'file',
-  '.svg': 'file',
-  '.woff': 'file',
-  '.woff2': 'file',
-  '.otf': 'file',
-  '.eot': 'file',
-  '.ttf': 'file',
+  ".tsx": "tsx",
+  ".ts": "ts",
+  ".js": "js",
+  ".jsx": "jsx",
+  ".json": "json",
+  ".png": "file",
+  ".jpg": "file",
+  ".jpeg": "file",
+  ".gif": "file",
+  ".svg": "file",
+  ".woff": "file",
+  ".woff2": "file",
+  ".otf": "file",
+  ".eot": "file",
+  ".ttf": "file",
 };
 
 const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
 // FIXME: make cross platform
-const entryPointsMatcher = /(app\/assets\/js\/|slices\/(.*\/)assets\/js\/)/
+const entryPointsMatcher = /(app\/assets\/js\/|slices\/(.*\/)assets\/js\/)/;
 
 const findEntryPoints = (root: string): Record<string, string> => {
   const result: Record<string, string> = {};
@@ -36,31 +36,31 @@ const findEntryPoints = (root: string): Record<string, string> => {
   ]);
 
   entryPoints.forEach((entryPoint) => {
-    let modifiedPath = entryPoint.replace(entryPointsMatcher, "$2")
-    const relativePath = path.relative(root, modifiedPath)
+    let modifiedPath = entryPoint.replace(entryPointsMatcher, "$2");
+    const relativePath = path.relative(root, modifiedPath);
 
-    const { dir, name } = path.parse(relativePath)
+    const { dir, name } = path.parse(relativePath);
 
     if (dir) {
-      modifiedPath = path.join(dir, name)
+      modifiedPath = path.join(dir, name);
     } else {
-      modifiedPath = name
+      modifiedPath = name;
     }
 
-    result[modifiedPath] = entryPoint
+    result[modifiedPath] = entryPoint;
   });
 
   return result;
-}
+};
 
 // TODO: feels like this really should be passed a root too, to become the cwd for globSync
 const externalDirectories = (): string[] => {
   const assetDirsPattern = [
     path.join("app", "assets", "*"),
     path.join("slices", "*", "assets", "*"),
-  ]
+  ];
 
-  const excludeDirs = ['js', 'css'];
+  const excludeDirs = ["js", "css"];
 
   try {
     const dirs = globSync(assetDirsPattern, { nodir: false });
@@ -71,7 +71,7 @@ const externalDirectories = (): string[] => {
 
     return filteredDirs.map((dir) => path.join(dir, "*"));
   } catch (err) {
-    console.error('Error listing external directories:', err);
+    console.error("Error listing external directories:", err);
     return [];
   }
 };
@@ -80,9 +80,9 @@ const externalDirectories = (): string[] => {
 export const buildOptions = (root: string, args: Args): Partial<BuildOptions> => {
   const pluginOptions: HanamiEsbuildPluginOptions = {
     ...defaults,
-    sriAlgorithms: args.sri || []
+    sriAlgorithms: args.sri || [],
   };
-  const plugin = hanamiEsbuild(pluginOptions)
+  const plugin = hanamiEsbuild(pluginOptions);
 
   const options: Partial<BuildOptions> = {
     bundle: true,
@@ -96,7 +96,7 @@ export const buildOptions = (root: string, args: Args): Partial<BuildOptions> =>
     entryNames: "[dir]/[name]-[hash]",
     entryPoints: findEntryPoints(root),
     plugins: [plugin],
-  }
+  };
 
   return options;
 };
@@ -104,9 +104,9 @@ export const buildOptions = (root: string, args: Args): Partial<BuildOptions> =>
 export const watchOptions = (root: string, args: Args): Partial<BuildOptions> => {
   const pluginOptions: HanamiEsbuildPluginOptions = {
     ...defaults,
-    hash: false
+    hash: false,
   };
-  const plugin = hanamiEsbuild(pluginOptions)
+  const plugin = hanamiEsbuild(pluginOptions);
 
   const options: Partial<BuildOptions> = {
     bundle: true,
@@ -120,8 +120,7 @@ export const watchOptions = (root: string, args: Args): Partial<BuildOptions> =>
     entryNames: "[dir]/[name]",
     entryPoints: findEntryPoints(root),
     plugins: [plugin],
-  }
+  };
 
   return options;
-}
-
+};

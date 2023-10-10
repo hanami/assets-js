@@ -15,6 +15,6 @@ export const parseArgs = (args: string[]): Args => {
 
   return {
     watch: result.hasOwnProperty("watch"),
-    sri: result["sri"]?.split(",")
+    sri: result["sri"]?.split(","),
   };
-}
+};

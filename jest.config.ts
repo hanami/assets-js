@@ -1,10 +1,8 @@
-import type { JestConfigWithTsJest } from "ts-jest"
+import type { JestConfigWithTsJest } from "ts-jest";
 
 const config: JestConfigWithTsJest = {
   testEnvironment: "node",
-  testMatch: [
-    "**/test/**/*.test.ts",
-  ],
+  testMatch: ["**/test/**/*.test.ts"],
   // See https://kulshekhar.github.io/ts-jest/docs/guides/esm-support#esm-presets for below
   preset: "ts-jest/presets/default-esm",
   moduleNameMapper: {
@@ -12,11 +10,12 @@ const config: JestConfigWithTsJest = {
   },
   transform: {
     "^.+\\.tsx?$": [
-      "ts-jest", {
+      "ts-jest",
+      {
         useESM: true,
       },
     ],
   },
-}
+};
 
-export default config
+export default config;
