@@ -119,24 +119,24 @@ describe("hanami-assets", () => {
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "app.js": {
-        url: "/assets/app-QFCHLRMD.js",
-        sri: ["sha384-tn8zwUHIJjEPGmD6vZ2DKmY6LlbNkI86ltpSiBxcCICkETm5g4sMDV0oF2I+8xDz"],
+        url: "/assets/app-YRYN3NGE.js",
+        sri: ["sha384-WAsFKE/RcOorRHTXmdRD8gxW+IxxfzKHbRgzcCuhFDC5StKi+6T+AawxcUmuv8Z5"],
       },
       "background.jpg": {
         url: "/assets/background-UU2XY655.jpg",
         sri: ["sha384-M7QyKTUfzyVWNC4FoMYq0ypu7LDifAYWEtXRT5d6M3Prpau9t5wavW1216HhvCJc"],
       },
       "app.css": {
-        url: "/assets/app-REBB4IZN.css",
-        sri: ["sha384-ZqNcOOnG1W+Udcquy7qBs4b51X1cq8Bkv0CMEIt5I20+TWmW33pLUHl54ueCnyFD"],
+        url: "/assets/app-52IRG6FL.css",
+        sri: ["sha384-exnTgMSGuMdSlZfQ32p6o/PEEIa+SK6cMsxZDc7/fcPkEr14rBKSzDsW4Qpt13GB"],
       },
       "login/app.js": {
-        url: "/assets/login/app-SV7Q442Q.js",
-        sri: ["sha384-fkk3ZtSsrBOPtmKaOSoHC5IKdaphOeG05j0Z3iQPrJdbQAxsAmCkJMNQphDyL8E2"],
+        url: "/assets/login/app-I4563JRL.js",
+        sri: ["sha384-z0TVeAyYeMsyiCnAqNu/OYs+IxvLwkTocy2uchAChAHmXaV68xYonUUzn1wJ4myH"],
       },
       "admin/app.js": {
-        url: "/assets/admin/app-XJBJOVJT.js",
-        sri: ["sha384-aqVgGQ+qnJfgFqVoOlHBEEQ1eUtNDN5cQu9EdUW7gIGT9VaUN8H2yw5ai+lW+jc9"],
+        url: "/assets/admin/app-H646WNEB.js",
+        sri: ["sha384-noZH9am6sCla+CnG7l+IGxBlTqo68Wz891fhqfIF1U2kgafUrRzZewAt0yA6jl15"],
       },
       "font.otf": {
         url: "/assets/font-E1A70B27.otf",

@@ -1,18 +1,18 @@
-import fs from 'fs-extra';
-import path from 'path';
-import crypto from 'node:crypto';
-const URL_SEPARATOR = '/';
+import fs from "fs-extra";
+import path from "path";
+import crypto from "node:crypto";
+const URL_SEPARATOR = "/";
 export const defaults = {
-    root: '',
-    publicDir: 'public',
-    destDir: path.join('public', 'assets'),
-    manifestPath: path.join('public', 'assets.json'),
+    root: "",
+    publicDir: "public",
+    destDir: path.join("public", "assets"),
+    manifestPath: path.join("public", "assets.json"),
     sriAlgorithms: [],
     hash: true,
 };
 const hanamiEsbuild = (options = { ...defaults }) => {
     return {
-        name: 'hanami-esbuild',
+        name: "hanami-esbuild",
         setup(build) {
             build.initialOptions.metafile = true;
             options.root = options.root || process.cwd();
@@ -22,17 +22,19 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                 const outputs = result.metafile?.outputs;
                 const assetsManifest = {};
                 const calulateSourceUrl = (str) => {
-                    return normalizeUrl(str).replace(/\/assets\//, '').replace(/-[A-Z0-9]{8}/, '');
+                    return normalizeUrl(str)
+                        .replace(/\/assets\//, "")
+                        .replace(/-[A-Z0-9]{8}/, "");
                 };
                 const calulateDestinationUrl = (str) => {
-                    return normalizeUrl(str).replace(/public/, '');
+                    return normalizeUrl(str).replace(/public/, "");
                 };
                 const normalizeUrl = (str) => {
                     return str.replace(/[\\]+/, URL_SEPARATOR);
                 };
                 const calculateSubresourceIntegrity = (algorithm, path) => {
-                    const content = fs.readFileSync(path, 'utf8');
-                    const hash = crypto.createHash(algorithm).update(content).digest('base64');
+                    const content = fs.readFileSync(path, "utf8");
+                    const hash = crypto.createHash(algorithm).update(content).digest("base64");
                     return `${algorithm}-${hash}`;
                 };
                 // Inspired by https://github.com/evanw/esbuild/blob/2f2b90a99d626921d25fe6d7d0ca50bd48caa427/internal/bundler/bundler.go#L1057
@@ -40,7 +42,7 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                     if (!hash) {
                         return null;
                     }
-                    const result = crypto.createHash('sha256').update(hashBytes).digest('hex');
+                    const result = crypto.createHash("sha256").update(hashBytes).digest("hex");
                     return result.slice(0, 8).toUpperCase();
                 };
                 function extractEsbuildInputs(inputData) {
@@ -84,7 +86,7 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                         const fileHash = calculateHash(fs.readFileSync(srcPath), options.hash);
                         const fileExtension = path.extname(srcPath);
                         const baseName = path.basename(srcPath, fileExtension);
-                        const destFileName = [baseName, fileHash].filter(item => item !== null).join("-") + fileExtension;
+                        const destFileName = [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
                         const destPath = path.join(options.destDir, path.relative(dirPath, srcPath).replace(file, destFileName));
                         if (fs.lstatSync(srcPath).isDirectory()) {
                             assets.push(...processAssetDirectory(destPath, inputs, options));
@@ -96,7 +98,7 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                     });
                     return assets;
                 };
-                if (typeof outputs === 'undefined') {
+                if (typeof outputs === "undefined") {
                     return;
                 }
                 const inputs = extractEsbuildInputs(outputs);
@@ -106,7 +108,7 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                 });
                 const assetsToProcess = Object.keys(outputs).concat(copiedAssets);
                 for (const assetToProcess of assetsToProcess) {
-                    if (assetToProcess.endsWith('.map')) {
+                    if (assetToProcess.endsWith(".map")) {
                         continue;
                     }
                     const destinationUrl = calulateDestinationUrl(assetToProcess);

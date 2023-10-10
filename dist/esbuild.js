@@ -1,22 +1,22 @@
 import path from "path";
 import { globSync } from "glob";
-import hanamiEsbuild, { defaults } from './hanami-esbuild-plugin.js';
+import hanamiEsbuild, { defaults } from "./hanami-esbuild-plugin.js";
 const loader = {
-    '.tsx': 'tsx',
-    '.ts': 'ts',
-    '.js': 'js',
-    '.jsx': 'jsx',
-    '.json': 'json',
-    '.png': 'file',
-    '.jpg': 'file',
-    '.jpeg': 'file',
-    '.gif': 'file',
-    '.svg': 'file',
-    '.woff': 'file',
-    '.woff2': 'file',
-    '.otf': 'file',
-    '.eot': 'file',
-    '.ttf': 'file',
+    ".tsx": "tsx",
+    ".ts": "ts",
+    ".js": "js",
+    ".jsx": "jsx",
+    ".json": "json",
+    ".png": "file",
+    ".jpg": "file",
+    ".jpeg": "file",
+    ".gif": "file",
+    ".svg": "file",
+    ".woff": "file",
+    ".woff2": "file",
+    ".otf": "file",
+    ".eot": "file",
+    ".ttf": "file",
 };
 const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
 // FIXME: make cross platform
@@ -48,7 +48,7 @@ const externalDirectories = () => {
         path.join("app", "assets", "*"),
         path.join("slices", "*", "assets", "*"),
     ];
-    const excludeDirs = ['js', 'css'];
+    const excludeDirs = ["js", "css"];
     try {
         const dirs = globSync(assetDirsPattern, { nodir: false });
         const filteredDirs = dirs.filter((dir) => {
@@ -58,7 +58,7 @@ const externalDirectories = () => {
         return filteredDirs.map((dir) => path.join(dir, "*"));
     }
     catch (err) {
-        console.error('Error listing external directories:', err);
+        console.error("Error listing external directories:", err);
         return [];
     }
 };
@@ -66,7 +66,7 @@ const externalDirectories = () => {
 export const buildOptions = (root, args) => {
     const pluginOptions = {
         ...defaults,
-        sriAlgorithms: args.sri || []
+        sriAlgorithms: args.sri || [],
     };
     const plugin = hanamiEsbuild(pluginOptions);
     const options = {
@@ -87,7 +87,7 @@ export const buildOptions = (root, args) => {
 export const watchOptions = (root, args) => {
     const pluginOptions = {
         ...defaults,
-        hash: false
+        hash: false,
     };
     const plugin = hanamiEsbuild(pluginOptions);
     const options = {

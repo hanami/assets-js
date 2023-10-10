@@ -1,17 +1,10 @@
 #!/usr/bin/env node
-import fs from 'fs-extra';
-import path from 'path';
-import esbuild from 'esbuild';
+import fs from "fs-extra";
+import path from "path";
+import esbuild from "esbuild";
 import { parseArgs } from "./args.js";
-import { buildOptions, watchOptions } from './esbuild.js';
-const touchManifest = (root) => {
-    const manifestPath = path.join(root, "public", "assets.json");
-    const manifestDir = path.dirname(manifestPath);
-    fs.ensureDirSync(manifestDir);
-    fs.writeFileSync(manifestPath, JSON.stringify({}, null, 2));
-};
-const root = process.cwd();
-export const run = function (argv, optionsFunction) {
+import { buildOptions, watchOptions } from "./esbuild.js";
+export const run = async function (root, argv, optionsFunction) {
     const args = parseArgs(argv);
     // TODO: make nicer
     let esbuildOptions = args.watch ? watchOptions(root, args) : buildOptions(root, args);
@@ -24,11 +17,17 @@ export const run = function (argv, optionsFunction) {
     };
     if (args.watch) {
         touchManifest(root);
-        esbuild.context(esbuildOptions).then((ctx) => {
-            ctx.watch();
-        }).catch(errorHandler);
+        const ctx = await esbuild.context(esbuildOptions);
+        await ctx.watch().catch(errorHandler);
+        return ctx;
     }
     else {
-        esbuild.build(esbuildOptions).catch(errorHandler);
+        await esbuild.build(esbuildOptions).catch(errorHandler);
     }
+};
+const touchManifest = (root) => {
+    const manifestPath = path.join(root, "public", "assets.json");
+    const manifestDir = path.dirname(manifestPath);
+    fs.ensureDirSync(manifestDir);
+    fs.writeFileSync(manifestPath, JSON.stringify({}, null, 2));
 };
