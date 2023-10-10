@@ -1,2 +1,5 @@
 # Ignore artifacts
 dist
+
+# Ignore non-JS files
+*.md
