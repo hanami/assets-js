@@ -2,12 +2,12 @@
   "name": "hanami-assets",
   "version": "2.1.0-beta.2",
   "type": "module",
-  "description": "Hanami Assets management via Esbuild",
+  "description": "Hanami assets management via Esbuild",
   "bin": {
     "hanami-assets": "dist/hanami-assets.js"
   },
-  "main": "dist/hanami-esbuild-plugin.js",
-  "types": "dist/hanami-esbuild-plugin.d.ts",
+  "main": "dist/hanami-assets.js",
+  "types": "dist/hanami-assets.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "jest"
