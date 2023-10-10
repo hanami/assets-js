@@ -1,15 +1,12 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { globSync } from 'glob'
-import { ChildProcess, execFileSync, execSync, spawn } from 'child_process';
 import crypto from 'node:crypto';
+import * as assets from "../src/hanami-assets";
 
 const originalWorkingDir = process.cwd();
-const binPath = path.join(originalWorkingDir, 'dist', 'hanami-assets.js');
-
 const dest = path.resolve(__dirname, '..', 'tmp', crypto.randomUUID());
 const watchTimeout = 60000; // ms (60 seconds)
-let watchProcess: ChildProcess;
 
 // Helper function to create a test environment
 async function createTestEnvironment() {
@@ -25,10 +22,6 @@ async function createTestEnvironment() {
 
 // Helper function to clean up the test environment
 async function cleanTestEnvironment() {
-  if (watchProcess) {
-    watchProcess.kill();
-  }
-
   process.chdir(originalWorkingDir);
   await fs.remove(dest); // Comment this line to manually inspect precompile results
 }
@@ -50,7 +43,8 @@ describe('hanami-assets', () => {
     await fs.writeFile(entryPoint2, "console.log('Hello, Admin!');");
     await fs.writeFile(entryPoint3, "console.log('Hello, Metrics!');");
 
-    execSync(binPath, { stdio: "inherit" })
+    // Compile assets
+    await assets.run(dest, [])
 
     // FIXME: this path should take into account the file hashing in the file name
     const appAsset = globSync(path.join('public/assets/app-*.js'))[0]
@@ -92,7 +86,8 @@ describe('hanami-assets', () => {
     const entryPoint1 = path.join(dest, 'app/assets/js/app.js');
     await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
 
-    execFileSync(binPath, ['--sri=sha256,sha384,sha512'], { stdio: "inherit" })
+    // Compile assets
+    await assets.run(dest, ["--sri=sha256,sha384,sha512"])
 
     // Read and parse the manifest file
     const manifestContent = await fs.readFile(path.join(dest, 'public/assets.json'), 'utf-8');
@@ -114,7 +109,8 @@ describe('hanami-assets', () => {
   test('Full app', async () => {
     fs.copySync(path.join(__dirname, 'fixtures', 'todo'), dest);
 
-    execFileSync(binPath, ['--sri=sha384'], { stdio: "inherit" })
+    // Compile assets
+    await assets.run(dest, ["--sri=sha384"])
 
     // Read and parse the manifest file
     const manifestContent = await fs.readFile(path.join(dest, 'public/assets.json'), 'utf-8');
@@ -178,7 +174,9 @@ describe('hanami-assets', () => {
     const appAsset = path.join(dest, "public", "assets", "app.js");
     const imageAsset = path.join(dest, "public", "assets", "background.jpg");
 
-    watchProcess = spawn(binPath, ["--watch"], { cwd: dest });
+    // Watch for asset changes
+    let ctx = await assets.run(dest, ["--watch"])
+
     await fs.writeFile(entryPoint, "console.log('Hello, Watch!');");
 
     const appAssetExists = (timeout = watchTimeout): Promise<boolean> => {
@@ -221,6 +219,7 @@ describe('hanami-assets', () => {
 
     expect(manifest["background.jpg"]).toEqual({ "url": "/assets/background.jpg" })
 
-    // childProcess.kill("SIGHUP");
+    await ctx!.dispose()
+
   }, watchTimeout + 1000);
 });

@@ -1,6 +1,7 @@
 import path from "path";
 import { globSync } from "glob";
 import { BuildOptions, Loader } from "esbuild";
+import { Args } from "./args.js";
 import hanamiEsbuild, { HanamiEsbuildPluginOptions, defaults } from './hanami-esbuild-plugin.js';
 
 const loader: { [ext: string]: Loader } = {
@@ -75,17 +76,11 @@ const externalDirectories = (): string[] => {
   }
 };
 
-// TODO: make args a real type
 // TODO: reuse the logic between these two methods below
-export const buildOptions = (root: string, args: Record<string, string>): Partial<BuildOptions> => {
-  var sriAlgorithms : Array<string> = [];
-  if (args['sri']) {
-    sriAlgorithms = args['sri'].split(',');
-  }
-
+export const buildOptions = (root: string, args: Args): Partial<BuildOptions> => {
   const pluginOptions: HanamiEsbuildPluginOptions = {
     ...defaults,
-    sriAlgorithms: sriAlgorithms
+    sriAlgorithms: args.sri || []
   };
   const plugin = hanamiEsbuild(pluginOptions)
 
@@ -106,7 +101,7 @@ export const buildOptions = (root: string, args: Record<string, string>): Partia
   return options;
 };
 
-export const watchOptions = (root: string, args: Record<string, string>): Partial<BuildOptions> => {
+export const watchOptions = (root: string, args: Args): Partial<BuildOptions> => {
   const pluginOptions: HanamiEsbuildPluginOptions = {
     ...defaults,
     hash: false

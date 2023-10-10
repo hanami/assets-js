@@ -2,52 +2,42 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import { argv } from 'node:process';
-import esbuild from 'esbuild';
+import esbuild, { BuildOptions, BuildContext } from "esbuild";
+import { Args, parseArgs } from "./args.js";
 import { buildOptions, watchOptions } from './esbuild.js';
 
-export const parseArgs = (args: Array<string>): Record<string, string> => {
-  const result: Record<string, string> = {};
+type RunOptionsFunction = (args: Args, options: Partial<BuildOptions>) => Partial<BuildOptions>;
 
-  args.slice(2).forEach((arg) => {
-    const [key, value] = arg.replace(/^--/, '').split('=');
-    result[key] = value;
-  });
+export const run = async function(root: string, argv: string[], optionsFunction?: RunOptionsFunction): Promise<BuildContext | void> {
+  const args = parseArgs(argv);
 
-  return result;
-}
+  // TODO: make nicer
+  let esbuildOptions = args.watch ? watchOptions(root, args) : buildOptions(root, args);
+  if (optionsFunction) { esbuildOptions = optionsFunction(args, esbuildOptions); }
 
-export const touchManifest = (root: string): void => {
+  const errorHandler = (err: any): void => {
+    console.log(err);
+    process.exit(1);
+  }
+
+  if (args.watch) {
+    touchManifest(root);
+
+    const ctx = await esbuild.context(esbuildOptions)
+    await ctx.watch().catch(errorHandler)
+
+    return ctx;
+  }
+  else {
+    await esbuild.build(esbuildOptions).catch(errorHandler);
+  }
+};
+
+const touchManifest = (root: string): void => {
   const manifestPath = path.join(root, "public", "assets.json");
   const manifestDir = path.dirname(manifestPath);
 
   fs.ensureDirSync(manifestDir);
 
   fs.writeFileSync(manifestPath, JSON.stringify({}, null, 2));
-}
-
-export * from "./esbuild.js";
-
-const args = parseArgs(argv);
-const watch = args.hasOwnProperty("watch");
-const root = process.cwd();
-
-if (watch) {
-  touchManifest(root);
-
-  esbuild.context(watchOptions(root, args)).then((ctx) => {
-    // FIXME: add `await` to ctx.watch
-    ctx.watch();
-  }).catch(err => {
-    console.log(err);
-    process.exit(1);
-  });
-} else {
-  // FIXME: add `await` to esbuild.build
-  esbuild.build({
-    ...buildOptions(root, args),
-  }).catch(err => {
-    console.log(err);
-    process.exit(1);
-  });
 }

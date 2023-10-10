@@ -1,3 +1,4 @@
 import { BuildOptions } from "esbuild";
-export declare const buildOptions: (root: string, args: Record<string, string>) => Partial<BuildOptions>;
-export declare const watchOptions: (root: string, args: Record<string, string>) => Partial<BuildOptions>;
+import { Args } from "./args.js";
+export declare const buildOptions: (root: string, args: Args) => Partial<BuildOptions>;
+export declare const watchOptions: (root: string, args: Args) => Partial<BuildOptions>;

@@ -62,16 +62,11 @@ const externalDirectories = () => {
         return [];
     }
 };
-// TODO: make args a real type
 // TODO: reuse the logic between these two methods below
 export const buildOptions = (root, args) => {
-    var sriAlgorithms = [];
-    if (args['sri']) {
-        sriAlgorithms = args['sri'].split(',');
-    }
     const pluginOptions = {
         ...defaults,
-        sriAlgorithms: sriAlgorithms
+        sriAlgorithms: args.sri || []
     };
     const plugin = hanamiEsbuild(pluginOptions);
     const options = {
