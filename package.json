@@ -6,8 +6,8 @@
   "bin": {
     "hanami-assets": "dist/hanami-assets.js"
   },
-  "main": "dist/hanami-assets.js",
-  "types": "dist/hanami-assets.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "jest"
