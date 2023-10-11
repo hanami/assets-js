@@ -44,7 +44,7 @@ describe("hanami-assets", () => {
     await fs.writeFile(entryPoint3, "console.log('Hello, Metrics!');");
 
     // Compile assets
-    await assets.run({ root: dest })
+    await assets.run({ root: dest });
 
     // FIXME: this path should take into account the file hashing in the file name
     const appAsset = globSync(path.join("public/assets/app-*.js"))[0];

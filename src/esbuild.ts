@@ -5,7 +5,7 @@ import { Args } from "./args.js";
 import hanamiEsbuild, { HanamiEsbuildPluginOptions, defaults } from "./hanami-esbuild-plugin.js";
 
 export interface EsbuildOptions extends Partial<BuildOptions> {
-  plugins: Plugin[]
+  plugins: Plugin[];
 }
 
 const loader: { [ext: string]: Loader } = {

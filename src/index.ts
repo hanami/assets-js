@@ -14,12 +14,8 @@ interface RunOptions {
 
 type EsbuildOptionsFn = (args: Args, esbuildOptions: EsbuildOptions) => EsbuildOptions;
 
-export const run = async function(options?: RunOptions): Promise<BuildContext | void> {
-  const {
-    root = process.cwd(),
-    argv = process.argv,
-    esbuildOptionsFn = null,
-  } = options || {};
+export const run = async function (options?: RunOptions): Promise<BuildContext | void> {
+  const { root = process.cwd(), argv = process.argv, esbuildOptionsFn = null } = options || {};
 
   const args = parseArgs(argv);
 
