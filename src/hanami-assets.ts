@@ -13,14 +13,14 @@ interface RunOptions {
   esbuildOptionsFn?: EsbuildOptionsFn
 }
 
-type EsbuildOptionsFn = (args: Args, options: Partial<BuildOptions>) => Partial<BuildOptions>;
+type EsbuildOptionsFn = (args: Args, esbuildOptions: Partial<BuildOptions>) => Partial<BuildOptions>;
 
-export const run = async function(options: RunOptions): Promise<BuildContext | void> {
+export const run = async function(options?: RunOptions): Promise<BuildContext | void> {
   const {
     root = process.cwd(),
     argv = process.argv,
     esbuildOptionsFn = null,
-  } = options;
+  } = options || {};
 
   const args = parseArgs(argv);
 
