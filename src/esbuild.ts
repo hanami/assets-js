@@ -2,7 +2,7 @@ import path from "path";
 import { globSync } from "glob";
 import { BuildOptions, Loader, Plugin } from "esbuild";
 import { Args } from "./args.js";
-import hanamiEsbuild, { HanamiEsbuildPluginOptions, defaults } from "./hanami-esbuild-plugin.js";
+import hanamiEsbuild, { HanamiEsbuildPluginOptions, defaults } from "./esbuild-plugin.js";
 
 export interface EsbuildOptions extends Partial<BuildOptions> {
   plugins: Plugin[];

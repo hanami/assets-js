@@ -1,6 +1,6 @@
 import path from "path";
 import { globSync } from "glob";
-import hanamiEsbuild, { defaults } from "./hanami-esbuild-plugin.js";
+import hanamiEsbuild, { defaults } from "./esbuild-plugin.js";
 const loader = {
     ".tsx": "tsx",
     ".ts": "ts",
