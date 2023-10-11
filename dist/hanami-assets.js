@@ -4,12 +4,13 @@ import path from "path";
 import esbuild from "esbuild";
 import { parseArgs } from "./args.js";
 import { buildOptions, watchOptions } from "./esbuild.js";
-export const run = async function (root, argv, optionsFunction) {
+export const run = async function (options) {
+    const { root = process.cwd(), argv = process.argv, esbuildOptionsFn = null, } = options;
     const args = parseArgs(argv);
     // TODO: make nicer
     let esbuildOptions = args.watch ? watchOptions(root, args) : buildOptions(root, args);
-    if (optionsFunction) {
-        esbuildOptions = optionsFunction(args, esbuildOptions);
+    if (esbuildOptionsFn) {
+        esbuildOptions = esbuildOptionsFn(args, esbuildOptions);
     }
     const errorHandler = (err) => {
         console.log(err);

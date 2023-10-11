@@ -44,7 +44,7 @@ describe("hanami-assets", () => {
     await fs.writeFile(entryPoint3, "console.log('Hello, Metrics!');");
 
     // Compile assets
-    await assets.run(dest, []);
+    await assets.run({ root: dest })
 
     // FIXME: this path should take into account the file hashing in the file name
     const appAsset = globSync(path.join("public/assets/app-*.js"))[0];
@@ -87,7 +87,7 @@ describe("hanami-assets", () => {
     await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
 
     // Compile assets
-    await assets.run(dest, ["--sri=sha256,sha384,sha512"]);
+    await assets.run({ root: dest, argv: ["--sri=sha256,sha384,sha512"] });
 
     // Read and parse the manifest file
     const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
@@ -110,7 +110,7 @@ describe("hanami-assets", () => {
     fs.copySync(path.join(__dirname, "fixtures", "todo"), dest);
 
     // Compile assets
-    await assets.run(dest, ["--sri=sha384"]);
+    await assets.run({ root: dest, argv: ["--sri=sha384"] });
 
     // Read and parse the manifest file
     const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
@@ -166,7 +166,7 @@ describe("hanami-assets", () => {
       const imageAsset = path.join(dest, "public", "assets", "background.jpg");
 
       // Watch for asset changes
-      let ctx = await assets.run(dest, ["--watch"]);
+      let ctx = await assets.run({ root: dest, argv: ["--watch"] });
 
       await fs.writeFile(entryPoint, "console.log('Hello, Watch!');");
 

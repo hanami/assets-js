@@ -6,19 +6,28 @@ import esbuild, { BuildOptions, BuildContext } from "esbuild";
 import { Args, parseArgs } from "./args.js";
 import { buildOptions, watchOptions } from "./esbuild.js";
 
-type RunOptionsFunction = (args: Args, options: Partial<BuildOptions>) => Partial<BuildOptions>;
 
-export const run = async function (
-  root: string,
-  argv: string[],
-  optionsFunction?: RunOptionsFunction,
-): Promise<BuildContext | void> {
+interface RunOptions {
+  root?: string
+  argv?: string[]
+  esbuildOptionsFn?: EsbuildOptionsFn
+}
+
+type EsbuildOptionsFn = (args: Args, options: Partial<BuildOptions>) => Partial<BuildOptions>;
+
+export const run = async function(options: RunOptions): Promise<BuildContext | void> {
+  const {
+    root = process.cwd(),
+    argv = process.argv,
+    esbuildOptionsFn = null,
+  } = options;
+
   const args = parseArgs(argv);
 
   // TODO: make nicer
   let esbuildOptions = args.watch ? watchOptions(root, args) : buildOptions(root, args);
-  if (optionsFunction) {
-    esbuildOptions = optionsFunction(args, esbuildOptions);
+  if (esbuildOptionsFn) {
+    esbuildOptions = esbuildOptionsFn(args, esbuildOptions);
   }
 
   const errorHandler = (err: any): void => {
