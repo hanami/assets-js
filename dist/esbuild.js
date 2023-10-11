@@ -1,6 +1,6 @@
 import path from "path";
 import { globSync } from "glob";
-import hanamiEsbuild, { defaults } from "./esbuild-plugin.js";
+import esbuildPlugin, { defaults as pluginDefaults } from "./esbuild-plugin.js";
 const loader = {
     ".tsx": "tsx",
     ".ts": "ts",
@@ -65,10 +65,10 @@ const externalDirectories = () => {
 // TODO: reuse the logic between these two methods below
 export const buildOptions = (root, args) => {
     const pluginOptions = {
-        ...defaults,
+        ...pluginDefaults,
         sriAlgorithms: args.sri || [],
     };
-    const plugin = hanamiEsbuild(pluginOptions);
+    const plugin = esbuildPlugin(pluginOptions);
     const options = {
         bundle: true,
         outdir: path.join(root, "public", "assets"),
@@ -86,10 +86,10 @@ export const buildOptions = (root, args) => {
 };
 export const watchOptions = (root, args) => {
     const pluginOptions = {
-        ...defaults,
+        ...pluginDefaults,
         hash: false,
     };
-    const plugin = hanamiEsbuild(pluginOptions);
+    const plugin = esbuildPlugin(pluginOptions);
     const options = {
         bundle: true,
         outdir: path.join(root, "public", "assets"),

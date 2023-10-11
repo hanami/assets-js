@@ -2,7 +2,7 @@ import path from "path";
 import { globSync } from "glob";
 import { BuildOptions, Loader, Plugin } from "esbuild";
 import { Args } from "./args.js";
-import hanamiEsbuild, { HanamiEsbuildPluginOptions, defaults } from "./esbuild-plugin.js";
+import esbuildPlugin, { PluginOptions, defaults as pluginDefaults } from "./esbuild-plugin.js";
 
 export interface EsbuildOptions extends Partial<BuildOptions> {
   plugins: Plugin[];
@@ -82,11 +82,11 @@ const externalDirectories = (): string[] => {
 
 // TODO: reuse the logic between these two methods below
 export const buildOptions = (root: string, args: Args): EsbuildOptions => {
-  const pluginOptions: HanamiEsbuildPluginOptions = {
-    ...defaults,
+  const pluginOptions: PluginOptions = {
+    ...pluginDefaults,
     sriAlgorithms: args.sri || [],
   };
-  const plugin = hanamiEsbuild(pluginOptions);
+  const plugin = esbuildPlugin(pluginOptions);
 
   const options: EsbuildOptions = {
     bundle: true,
@@ -106,11 +106,11 @@ export const buildOptions = (root: string, args: Args): EsbuildOptions => {
 };
 
 export const watchOptions = (root: string, args: Args): EsbuildOptions => {
-  const pluginOptions: HanamiEsbuildPluginOptions = {
-    ...defaults,
+  const pluginOptions: PluginOptions = {
+    ...pluginDefaults,
     hash: false,
   };
-  const plugin = hanamiEsbuild(pluginOptions);
+  const plugin = esbuildPlugin(pluginOptions);
 
   const options: EsbuildOptions = {
     bundle: true,

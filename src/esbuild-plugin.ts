@@ -5,7 +5,7 @@ import crypto from "node:crypto";
 
 const URL_SEPARATOR = "/";
 
-export interface HanamiEsbuildPluginOptions {
+export interface PluginOptions {
   root: string;
   publicDir: string;
   destDir: string;
@@ -15,7 +15,7 @@ export interface HanamiEsbuildPluginOptions {
 }
 
 export const defaults: Pick<
-  HanamiEsbuildPluginOptions,
+  PluginOptions,
   "root" | "publicDir" | "destDir" | "manifestPath" | "sriAlgorithms" | "hash"
 > = {
   root: "",
@@ -31,7 +31,7 @@ interface Asset {
   sri?: Array<string>;
 }
 
-const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): Plugin => {
+const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
   return {
     name: "hanami-esbuild",
 
@@ -118,7 +118,7 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
         const processAssetDirectory = (
           pattern: string,
           inputs: Record<string, boolean>,
-          options: HanamiEsbuildPluginOptions,
+          options: PluginOptions,
         ): string[] => {
           const dirPath = path.dirname(pattern);
           const files = fs.readdirSync(dirPath);

@@ -1,5 +1,5 @@
 import { Plugin } from "esbuild";
-export interface HanamiEsbuildPluginOptions {
+export interface PluginOptions {
     root: string;
     publicDir: string;
     destDir: string;
@@ -7,6 +7,6 @@ export interface HanamiEsbuildPluginOptions {
     sriAlgorithms: Array<string>;
     hash: boolean;
 }
-export declare const defaults: Pick<HanamiEsbuildPluginOptions, "root" | "publicDir" | "destDir" | "manifestPath" | "sriAlgorithms" | "hash">;
-declare const hanamiEsbuild: (options?: HanamiEsbuildPluginOptions) => Plugin;
+export declare const defaults: Pick<PluginOptions, "root" | "publicDir" | "destDir" | "manifestPath" | "sriAlgorithms" | "hash">;
+declare const hanamiEsbuild: (options?: PluginOptions) => Plugin;
 export default hanamiEsbuild;
