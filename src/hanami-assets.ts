@@ -2,18 +2,17 @@
 
 import fs from "fs-extra";
 import path from "path";
-import esbuild, { BuildOptions, BuildContext } from "esbuild";
+import esbuild, { BuildContext } from "esbuild";
 import { Args, parseArgs } from "./args.js";
-import { buildOptions, watchOptions } from "./esbuild.js";
-
+import { EsbuildOptions, buildOptions, watchOptions } from "./esbuild.js";
 
 interface RunOptions {
-  root?: string
-  argv?: string[]
-  esbuildOptionsFn?: EsbuildOptionsFn
+  root?: string;
+  argv?: string[];
+  esbuildOptionsFn?: EsbuildOptionsFn;
 }
 
-type EsbuildOptionsFn = (args: Args, esbuildOptions: Partial<BuildOptions>) => Partial<BuildOptions>;
+type EsbuildOptionsFn = (args: Args, esbuildOptions: EsbuildOptions) => EsbuildOptions;
 
 export const run = async function(options?: RunOptions): Promise<BuildContext | void> {
   const {

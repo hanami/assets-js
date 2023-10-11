@@ -1,8 +1,12 @@
 import path from "path";
 import { globSync } from "glob";
-import { BuildOptions, Loader } from "esbuild";
+import { BuildOptions, Loader, Plugin } from "esbuild";
 import { Args } from "./args.js";
 import hanamiEsbuild, { HanamiEsbuildPluginOptions, defaults } from "./hanami-esbuild-plugin.js";
+
+export interface EsbuildOptions extends Partial<BuildOptions> {
+  plugins: Plugin[]
+}
 
 const loader: { [ext: string]: Loader } = {
   ".tsx": "tsx",
@@ -77,14 +81,14 @@ const externalDirectories = (): string[] => {
 };
 
 // TODO: reuse the logic between these two methods below
-export const buildOptions = (root: string, args: Args): Partial<BuildOptions> => {
+export const buildOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: HanamiEsbuildPluginOptions = {
     ...defaults,
     sriAlgorithms: args.sri || [],
   };
   const plugin = hanamiEsbuild(pluginOptions);
 
-  const options: Partial<BuildOptions> = {
+  const options: EsbuildOptions = {
     bundle: true,
     outdir: path.join(root, "public", "assets"),
     absWorkingDir: root,
@@ -101,14 +105,14 @@ export const buildOptions = (root: string, args: Args): Partial<BuildOptions> =>
   return options;
 };
 
-export const watchOptions = (root: string, args: Args): Partial<BuildOptions> => {
+export const watchOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: HanamiEsbuildPluginOptions = {
     ...defaults,
     hash: false,
   };
   const plugin = hanamiEsbuild(pluginOptions);
 
-  const options: Partial<BuildOptions> = {
+  const options: EsbuildOptions = {
     bundle: true,
     outdir: path.join(root, "public", "assets"),
     absWorkingDir: root,

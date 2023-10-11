@@ -1,4 +1,7 @@
-import { BuildOptions } from "esbuild";
+import { BuildOptions, Plugin } from "esbuild";
 import { Args } from "./args.js";
-export declare const buildOptions: (root: string, args: Args) => Partial<BuildOptions>;
-export declare const watchOptions: (root: string, args: Args) => Partial<BuildOptions>;
+export interface EsbuildOptions extends Partial<BuildOptions> {
+    plugins: Plugin[];
+}
+export declare const buildOptions: (root: string, args: Args) => EsbuildOptions;
+export declare const watchOptions: (root: string, args: Args) => EsbuildOptions;
