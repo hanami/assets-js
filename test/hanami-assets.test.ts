@@ -3,6 +3,7 @@ import path from "path";
 import { globSync } from "glob";
 import crypto from "node:crypto";
 import * as assets from "../src/index";
+import { expect, beforeEach, afterEach, describe, test } from "vitest";
 
 const originalWorkingDir = process.cwd();
 const dest = path.resolve(__dirname, "..", "tmp", crypto.randomUUID());
