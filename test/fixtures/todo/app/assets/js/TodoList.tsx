@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import TodoItem from './TodoItem';
+import React, { useState } from "react";
+import TodoItem from "./TodoItem";
 
 interface Todo {
   id: number;
@@ -9,21 +9,19 @@ interface Todo {
 
 const TodoList = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [text, setText] = useState<string>('');
+  const [text, setText] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!text.trim()) return;
     const newTodo: Todo = { id: Date.now(), text, completed: false };
     setTodos([...todos, newTodo]);
-    setText('');
+    setText("");
   };
 
   const handleComplete = (id: number) => {
     setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
+      prevTodos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)),
     );
   };
 

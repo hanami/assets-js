@@ -1,15 +1,11 @@
-import {
-  BuildResult,
-  Plugin,
-  PluginBuild
-} from 'esbuild';
-import fs from 'fs-extra';
-import path from 'path';
-import crypto from 'node:crypto';
+import { BuildResult, Plugin, PluginBuild } from "esbuild";
+import fs from "fs-extra";
+import path from "path";
+import crypto from "node:crypto";
 
-const URL_SEPARATOR = '/';
+const URL_SEPARATOR = "/";
 
-export interface HanamiEsbuildPluginOptions {
+export interface PluginOptions {
   root: string;
   publicDir: string;
   destDir: string;
@@ -18,11 +14,14 @@ export interface HanamiEsbuildPluginOptions {
   hash: boolean;
 }
 
-export const defaults: Pick<HanamiEsbuildPluginOptions, 'root' | 'publicDir' | 'destDir' | 'manifestPath' | 'sriAlgorithms' | 'hash'> = {
-  root: '',
-  publicDir: 'public',
-  destDir: path.join('public', 'assets'),
-  manifestPath: path.join('public', 'assets.json'),
+export const defaults: Pick<
+  PluginOptions,
+  "root" | "publicDir" | "destDir" | "manifestPath" | "sriAlgorithms" | "hash"
+> = {
+  root: "",
+  publicDir: "public",
+  destDir: path.join("public", "assets"),
+  manifestPath: path.join("public", "assets.json"),
   sriAlgorithms: [],
   hash: true,
 };
@@ -32,9 +31,9 @@ interface Asset {
   sri?: Array<string>;
 }
 
-const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): Plugin => {
+const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
   return {
-    name: 'hanami-esbuild',
+    name: "hanami-esbuild",
 
     setup(build: PluginBuild) {
       build.initialOptions.metafile = true;
@@ -48,23 +47,25 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
         const assetsManifest: Record<string, Asset> = {};
 
         const calulateSourceUrl = (str: string): string => {
-          return normalizeUrl(str).replace(/\/assets\//, '').replace(/-[A-Z0-9]{8}/, '');
-        }
+          return normalizeUrl(str)
+            .replace(/\/assets\//, "")
+            .replace(/-[A-Z0-9]{8}/, "");
+        };
 
         const calulateDestinationUrl = (str: string): string => {
-          return normalizeUrl(str).replace(/public/, '');
-        }
+          return normalizeUrl(str).replace(/public/, "");
+        };
 
         const normalizeUrl = (str: string): string => {
           return str.replace(/[\\]+/, URL_SEPARATOR);
-        }
+        };
 
         const calculateSubresourceIntegrity = (algorithm: string, path: string): string => {
-          const content = fs.readFileSync(path, 'utf8');
-          const hash = crypto.createHash(algorithm).update(content).digest('base64');
+          const content = fs.readFileSync(path, "utf8");
+          const hash = crypto.createHash(algorithm).update(content).digest("base64");
 
           return `${algorithm}-${hash}`;
-        }
+        };
 
         // Inspired by https://github.com/evanw/esbuild/blob/2f2b90a99d626921d25fe6d7d0ca50bd48caa427/internal/bundler/bundler.go#L1057
         const calculateHash = (hashBytes: Uint8Array, hash: boolean): string | null => {
@@ -72,10 +73,10 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
             return null;
           }
 
-          const result = crypto.createHash('sha256').update(hashBytes).digest('hex');
+          const result = crypto.createHash("sha256").update(hashBytes).digest("hex");
 
           return result.slice(0, 8).toUpperCase();
-        }
+        };
 
         function extractEsbuildInputs(inputData: Record<string, any>): Record<string, boolean> {
           const inputs: Record<string, boolean> = {};
@@ -114,7 +115,11 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
           return;
         };
 
-        const processAssetDirectory = (pattern: string, inputs: Record<string, boolean>, options: HanamiEsbuildPluginOptions): string[] => {
+        const processAssetDirectory = (
+          pattern: string,
+          inputs: Record<string, boolean>,
+          options: PluginOptions,
+        ): string[] => {
           const dirPath = path.dirname(pattern);
           const files = fs.readdirSync(dirPath);
           const assets: string[] = [];
@@ -130,8 +135,12 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
             const fileHash = calculateHash(fs.readFileSync(srcPath), options.hash);
             const fileExtension = path.extname(srcPath);
             const baseName = path.basename(srcPath, fileExtension);
-            const destFileName = [baseName, fileHash].filter(item => item !== null).join("-") + fileExtension;
-            const destPath = path.join(options.destDir, path.relative(dirPath, srcPath).replace(file, destFileName));
+            const destFileName =
+              [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
+            const destPath = path.join(
+              options.destDir,
+              path.relative(dirPath, srcPath).replace(file, destFileName),
+            );
 
             if (fs.lstatSync(srcPath).isDirectory()) {
               assets.push(...processAssetDirectory(destPath, inputs, options));
@@ -144,7 +153,7 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
           return assets;
         };
 
-        if (typeof outputs === 'undefined') {
+        if (typeof outputs === "undefined") {
           return;
         }
 
@@ -157,7 +166,7 @@ const hanamiEsbuild = (options: HanamiEsbuildPluginOptions = { ...defaults }): P
         const assetsToProcess = Object.keys(outputs).concat(copiedAssets);
 
         for (const assetToProcess of assetsToProcess) {
-          if (assetToProcess.endsWith('.map')) {
+          if (assetToProcess.endsWith(".map")) {
             continue;
           }
 
