@@ -1,6 +1,6 @@
 {
   "name": "hanami-assets",
-  "version": "2.1.0-rc.1",
+  "version": "2.1.0-rc.2",
   "type": "module",
   "description": "Hanami assets management via Esbuild",
   "main": "dist/index.js",
@@ -39,6 +39,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
   },
   "dependencies": {

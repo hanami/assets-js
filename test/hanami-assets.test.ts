@@ -127,8 +127,8 @@ describe("hanami-assets", () => {
         sri: ["sha384-M7QyKTUfzyVWNC4FoMYq0ypu7LDifAYWEtXRT5d6M3Prpau9t5wavW1216HhvCJc"],
       },
       "app.css": {
-        url: "/assets/app-52IRG6FL.css",
-        sri: ["sha384-exnTgMSGuMdSlZfQ32p6o/PEEIa+SK6cMsxZDc7/fcPkEr14rBKSzDsW4Qpt13GB"],
+        url: "/assets/app-4HPGUYGF.css",
+        sri: ["sha384-KsEObWWMvw+PouA5LgKpXohYpsOO4h9dL9pv7LwznkIg83/n1gkJo+S/oU/9Qb8Q"],
       },
       "login/app.js": {
         url: "/assets/login/app-I4563JRL.js",
