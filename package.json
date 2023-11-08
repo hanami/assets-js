@@ -20,7 +20,10 @@
   "author": "Hanami Team",
   "license": "MIT",
   "homepage": "https://hanamirb.org",
-  "repository": "github:hanami/assets-js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hanami/assets-js.git"
+  },
   "bugs": {
     "url": "https://github.com/hanami/assets-js/issues"
   },
