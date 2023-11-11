@@ -126,6 +126,10 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
 
           files.forEach((file) => {
             const srcPath = path.join(dirPath, file);
+            // Skip if the file is not a file, i.e. a directory
+            if (!fs.lstatSync(srcPath).isFile()) {
+              return;
+            }
 
             // Skip if the file is already processed by esbuild
             if (inputs.hasOwnProperty(srcPath)) {
