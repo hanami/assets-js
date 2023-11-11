@@ -121,13 +121,13 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
           options: PluginOptions,
         ): string[] => {
           const dirPath = path.dirname(pattern);
-          const files = fs.readdirSync(dirPath);
+          const files = fs.readdirSync(dirPath, { recursive: true });
           const assets: string[] = [];
 
           files.forEach((file) => {
             const srcPath = path.join(dirPath, file);
             // Skip if the file is not a file, i.e. a directory
-            if (!fs.lstatSync(srcPath).isFile()) {
+            if (!fs.statSync(srcPath).isFile()) {
               return;
             }
 
