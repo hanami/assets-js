@@ -125,7 +125,7 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
           const assets: string[] = [];
 
           files.forEach((file) => {
-            const srcPath = path.join(dirPath, file);
+            const srcPath = path.join(dirPath, file.toString());
             // Skip if the file is not a file, i.e. a directory
             if (!fs.statSync(srcPath).isFile()) {
               return;
@@ -143,7 +143,7 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
               [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
             const destPath = path.join(
               options.destDir,
-              path.relative(dirPath, srcPath).replace(file, destFileName),
+              path.relative(dirPath, srcPath).replace(file.toString(), destFileName),
             );
 
             if (fs.lstatSync(srcPath).isDirectory()) {
