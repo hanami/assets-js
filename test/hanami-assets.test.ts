@@ -146,6 +146,10 @@ describe("hanami-assets", () => {
         url: "/assets/logo-C1EF77E4.png",
         sri: ["sha384-7q5x+ZjZrCoWwyV0BTyc8HUPf1xr+n9l77gwxmwywPWSe0PtopZj1T8NTUPFo0FI"],
       },
+      "nested/image.jpg": {
+        sri: ["sha384-M7QyKTUfzyVWNC4FoMYq0ypu7LDifAYWEtXRT5d6M3Prpau9t5wavW1216HhvCJc"],
+        url: "/assets/image-83509E65.jpg",
+      },
     });
   });
 
