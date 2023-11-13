@@ -3,6 +3,9 @@
   "version": "2.1.0-rc.2",
   "type": "module",
   "description": "Hanami assets management via Esbuild",
+  "engines": {
+    "node": ">= 20.1"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

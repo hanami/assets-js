@@ -148,7 +148,7 @@ describe("hanami-assets", () => {
       },
       "nested/image.jpg": {
         sri: ["sha384-M7QyKTUfzyVWNC4FoMYq0ypu7LDifAYWEtXRT5d6M3Prpau9t5wavW1216HhvCJc"],
-        url: "/assets/image-83509E65.jpg",
+        url: "/assets/nested/image-83509E65.jpg",
       },
     });
   });

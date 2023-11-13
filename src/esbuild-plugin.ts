@@ -143,7 +143,7 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
               [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
             const destPath = path.join(
               options.destDir,
-              path.relative(dirPath, srcPath).replace(file.toString(), destFileName),
+              path.relative(dirPath, srcPath).replace(path.basename(file.toString()), destFileName),
             );
 
             if (fs.lstatSync(srcPath).isDirectory()) {
