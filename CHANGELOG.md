@@ -1,6 +1,8 @@
 # Hanami::AssetsJS
 Assets management via Esbuild
 
+## v2.1.0 - 2023-11-14
+
 ## v2.1.0-rc.2 - 2023-11-02
 ### Added
 - [Luca Guidi] Official support for Node 20 and 21
