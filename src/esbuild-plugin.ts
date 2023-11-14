@@ -50,7 +50,7 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
           const regex = /^slices\/([^\/]+)/;
           const match = dirPath.match(regex);
           return match ? match[1] : null;
-        }
+        };
 
         const calulateSourceUrl = (str: string): string => {
           return normalizeUrl(str)
@@ -86,7 +86,7 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
 
         const compactArray = (arr: Array<string | null>): Array<string> => {
           return arr.filter((token): token is string => token !== null);
-        }
+        };
 
         function extractEsbuildInputs(inputData: Record<string, any>): Record<string, boolean> {
           const inputs: Record<string, boolean> = {};
