@@ -142,8 +142,8 @@ describe("hanami-assets", () => {
         url: "/assets/font-E1A70B27.otf",
         sri: ["sha384-Lpm/oUsCQkOg41WyENyyB1zjaX/FB522VWlU44JKakwzwBxvu11le0ILkiPsR73K"],
       },
-      "logo.png": {
-        url: "/assets/logo-C1EF77E4.png",
+      "admin/logo.png": {
+        url: "/assets/admin/logo-C1EF77E4.png",
         sri: ["sha384-7q5x+ZjZrCoWwyV0BTyc8HUPf1xr+n9l77gwxmwywPWSe0PtopZj1T8NTUPFo0FI"],
       },
       "nested/image.jpg": {

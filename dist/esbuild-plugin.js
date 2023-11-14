@@ -91,7 +91,10 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                         const fileExtension = path.extname(srcPath);
                         const baseName = path.basename(srcPath, fileExtension);
                         const destFileName = [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
-                        const destPath = path.join(options.destDir, path.relative(dirPath, srcPath).replace(path.basename(file.toString()), destFileName));
+                        const pathMatcher = /(app\/assets\/.+?\/|slices\/(.*\/)assets\/.+?\/)/;
+                        const destPath = path.join(options.destDir, srcPath
+                            .replace(pathMatcher, "$2")
+                            .replace(path.basename(file.toString()), destFileName));
                         if (fs.lstatSync(srcPath).isDirectory()) {
                             assets.push(...processAssetDirectory(destPath, inputs, options));
                         }
