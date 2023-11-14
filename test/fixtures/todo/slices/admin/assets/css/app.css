@@ -1,0 +1,8 @@
+body {
+  /* This intentionally conflicts with the "background.jpg name used in app/ */
+  background-image: url("../images/background.jpg");
+  font-family: "Custom Font", sans-serif;
+  color: white;
+  margin: 0;
+  padding: 0;
+}
