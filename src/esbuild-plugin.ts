@@ -46,6 +46,12 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
         const outputs = result.metafile?.outputs;
         const assetsManifest: Record<string, Asset> = {};
 
+        const extractSliceName = (dirPath: string): string | null => {
+          const regex = /^slices\/([^\/]+)/;
+          const match = dirPath.match(regex);
+          return match ? match[1] : null;
+        }
+
         const calulateSourceUrl = (str: string): string => {
           return normalizeUrl(str)
             .replace(/\/assets\//, "")
@@ -77,6 +83,10 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
 
           return result.slice(0, 8).toUpperCase();
         };
+
+        const compactArray = (arr: Array<string | null>): Array<string> => {
+          return arr.filter((token): token is string => token !== null);
+        }
 
         function extractEsbuildInputs(inputData: Record<string, any>): Record<string, boolean> {
           const inputs: Record<string, boolean> = {};
@@ -137,10 +147,13 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
             const baseName = path.basename(srcPath, fileExtension);
             const destFileName =
               [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
-            const destPath = path.join(
+            const sliceName = extractSliceName(dirPath);
+            const pathTokens = compactArray([
               options.destDir,
+              sliceName,
               path.relative(dirPath, srcPath).replace(file, destFileName),
-            );
+            ]);
+            const destPath = path.join(...pathTokens);
 
             if (fs.lstatSync(srcPath).isDirectory()) {
               assets.push(...processAssetDirectory(destPath, inputs, options));

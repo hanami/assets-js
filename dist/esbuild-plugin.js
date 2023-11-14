@@ -21,6 +21,11 @@ const hanamiEsbuild = (options = { ...defaults }) => {
             build.onEnd(async (result) => {
                 const outputs = result.metafile?.outputs;
                 const assetsManifest = {};
+                const extractSliceName = (dirPath) => {
+                    const regex = /^slices\/([^\/]+)/;
+                    const match = dirPath.match(regex);
+                    return match ? match[1] : null;
+                };
                 const calulateSourceUrl = (str) => {
                     return normalizeUrl(str)
                         .replace(/\/assets\//, "")
@@ -44,6 +49,9 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                     }
                     const result = crypto.createHash("sha256").update(hashBytes).digest("hex");
                     return result.slice(0, 8).toUpperCase();
+                };
+                const compactArray = (arr) => {
+                    return arr.filter((token) => token !== null);
                 };
                 function extractEsbuildInputs(inputData) {
                     const inputs = {};
@@ -87,7 +95,13 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                         const fileExtension = path.extname(srcPath);
                         const baseName = path.basename(srcPath, fileExtension);
                         const destFileName = [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
-                        const destPath = path.join(options.destDir, path.relative(dirPath, srcPath).replace(file, destFileName));
+                        const sliceName = extractSliceName(dirPath);
+                        const pathTokens = compactArray([
+                            options.destDir,
+                            sliceName,
+                            path.relative(dirPath, srcPath).replace(file, destFileName),
+                        ]);
+                        const destPath = path.join(...pathTokens);
                         if (fs.lstatSync(srcPath).isDirectory()) {
                             assets.push(...processAssetDirectory(destPath, inputs, options));
                         }
