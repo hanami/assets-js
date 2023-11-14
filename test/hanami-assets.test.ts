@@ -143,12 +143,20 @@ describe("hanami-assets", () => {
         sri: ["sha384-z0TVeAyYeMsyiCnAqNu/OYs+IxvLwkTocy2uchAChAHmXaV68xYonUUzn1wJ4myH"],
       },
       "admin/app.js": {
-        url: "/assets/admin/app-H646WNEB.js",
-        sri: ["sha384-noZH9am6sCla+CnG7l+IGxBlTqo68Wz891fhqfIF1U2kgafUrRzZewAt0yA6jl15"],
+        url: "/assets/admin/app-OUO6B4MN.js",
+        sri: ["sha384-aDms8N5yp6tq1O/aKp2lE8w0O97To6hMOW3B0+87cTefddAyFkAvUnMHPTZjtxpu"],
+      },
+      "admin/app.css": {
+        url: "/assets/admin/app-OXNCF324.css",
+        sri: ["sha384-PnPV0tsh372Dix8iKr4LKHso4SIRiP3u0DYfWGNBgDTO8kHFJZpFtkReU+M0x08j"],
       },
       "admin/logo.png": {
         url: "/assets/admin/logo-C1EF77E4.png",
         sri: ["sha384-7q5x+ZjZrCoWwyV0BTyc8HUPf1xr+n9l77gwxmwywPWSe0PtopZj1T8NTUPFo0FI"],
+      },
+      "admin/background.jpg": {
+        url: "/assets/admin/background-83509E65.jpg",
+        sri: ["sha384-M7QyKTUfzyVWNC4FoMYq0ypu7LDifAYWEtXRT5d6M3Prpau9t5wavW1216HhvCJc"],
       },
     });
   });
