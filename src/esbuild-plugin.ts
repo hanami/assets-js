@@ -200,8 +200,11 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
           assetsManifest[sourceUrl] = asset;
         }
 
+        const existingManifest = fs.readJsonSync(manifest);
+        const resultManifest = { ...existingManifest, ...assetsManifest };
+
         // Write assets manifest to the destination directory
-        await fs.writeJson(manifest, assetsManifest, { spaces: 2 });
+        await fs.writeJson(manifest, resultManifest, { spaces: 2 });
       });
     },
   };

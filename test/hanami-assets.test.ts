@@ -71,13 +71,13 @@ describe("hanami-assets", () => {
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "admin/app.js": {
-        url: "/assets/admin/app-NLRESL5A.js",
+        url: "/assets/admin/app-NKKNBRXX.js",
       },
       "app.js": {
         url: "/assets/app-JLSTK5SN.js",
       },
       "metrics/app.js": {
-        url: "/assets/metrics/app-27Z7ZALS.js",
+        url: "/assets/metrics/app-Q7BVC6SS.js",
       },
     });
   });
@@ -143,22 +143,28 @@ describe("hanami-assets", () => {
         sri: ["sha384-z0TVeAyYeMsyiCnAqNu/OYs+IxvLwkTocy2uchAChAHmXaV68xYonUUzn1wJ4myH"],
       },
       "admin/app.js": {
-        url: "/assets/admin/app-OUO6B4MN.js",
-        sri: ["sha384-aDms8N5yp6tq1O/aKp2lE8w0O97To6hMOW3B0+87cTefddAyFkAvUnMHPTZjtxpu"],
+        url: "/assets/admin/app-RFBN5M7F.js",
+        sri: ["sha384-dW855HdCFw/XLP/popj7E2Xy76dQvWs/JGbMIs1hPRl1IzbTYUdj5CWwiMViVMIo"],
       },
       "admin/app.css": {
-        url: "/assets/admin/app-K2OSGDC3.css",
-        sri: ["sha384-n2VWEoeFz3/TSqdpa4vNSX71igkLMHsvjFEz0dBZUklGUtuvjdKVKtvvwMX//3u+"],
+        url: "/assets/admin/app-L3S2NK76.css",
+        sri: ["sha384-h5eqXASqe7pRAil3oO5d73/rbGxsPEq145MHtA/+D/zsMbhXFfmRKfHo++nzYQs6"],
       },
       "admin/logo.png": {
         url: "/assets/admin/logo-C1EF77E4.png",
         sri: ["sha384-7q5x+ZjZrCoWwyV0BTyc8HUPf1xr+n9l77gwxmwywPWSe0PtopZj1T8NTUPFo0FI"],
       },
       "admin/background.jpg": {
-        url: "/assets/admin/background-83509E65.jpg",
-        sri: ["sha384-M7QyKTUfzyVWNC4FoMYq0ypu7LDifAYWEtXRT5d6M3Prpau9t5wavW1216HhvCJc"],
+        url: "/assets/admin/background-SB6NFNOQ.jpg",
+        sri: ["sha384-KzOZwTAlOBMvr/np+ZObBUuYlE9fiVV7FN9HJGhwXKTKY3/joV+LAI31fqNvx9C6"],
       },
     });
+
+    const adminCss = await fs.readFile(
+      path.join(dest, "public/assets/admin/app-L3S2NK76.css"),
+      "utf-8",
+    );
+    expect(adminCss).toMatch("./background-SB6NFNOQ.jpg");
   });
 
   test(
