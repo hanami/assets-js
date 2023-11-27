@@ -5,7 +5,7 @@ import path from "path";
 import esbuild, { BuildContext, BuildResult } from "esbuild";
 import { Args, parseArgs } from "./args.js";
 import { EsbuildOptions, buildOptions, watchOptions } from "./esbuild.js";
-const cloneDeep = require("lodash.clonedeep");
+import cloneDeep from "lodash.clonedeep";
 
 interface RunOptions {
   root?: string;

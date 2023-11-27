@@ -4,7 +4,7 @@ import path from "path";
 import esbuild from "esbuild";
 import { parseArgs } from "./args.js";
 import { buildOptions, watchOptions } from "./esbuild.js";
-const cloneDeep = require("lodash.clonedeep");
+import cloneDeep from "lodash.clonedeep";
 export const run = async function (options) {
     const { root = process.cwd(), argv = process.argv, esbuildOptionsFn = null } = options || {};
     const args = parseArgs(argv);

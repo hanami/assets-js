@@ -34,6 +34,7 @@
     "@jest/globals": "^29.6.1",
     "@types/fs-extra": "^11.0.1",
     "@types/jest": "^29.5.3",
+    "@types/lodash.clonedeep": "^4.5.9",
     "@types/node": "^20.4.5",
     "@types/react": "^18.2.16",
     "@types/react-dom": "^18.2.7",
