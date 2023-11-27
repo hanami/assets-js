@@ -83,12 +83,16 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                 };
                 const processAssetDirectory = (pattern, inputs, options) => {
                     const dirPath = path.dirname(pattern);
-                    const files = fs.readdirSync(dirPath);
+                    const files = fs.readdirSync(dirPath, { recursive: true });
                     const assets = [];
                     files.forEach((file) => {
-                        const srcPath = path.join(dirPath, file);
+                        const srcPath = path.join(dirPath, file.toString());
                         // Skip if the file is already processed by esbuild
                         if (inputs.hasOwnProperty(srcPath)) {
+                            return;
+                        }
+                        // Skip directories and any other non-files
+                        if (!fs.statSync(srcPath).isFile()) {
                             return;
                         }
                         const fileHash = calculateHash(fs.readFileSync(srcPath), options.hash);
@@ -99,7 +103,7 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                         const pathTokens = compactArray([
                             options.destDir,
                             sliceName,
-                            path.relative(dirPath, srcPath).replace(file, destFileName),
+                            path.relative(dirPath, srcPath).replace(path.basename(file.toString()), destFileName),
                         ]);
                         const destPath = path.join(...pathTokens);
                         if (fs.lstatSync(srcPath).isDirectory()) {

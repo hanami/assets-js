@@ -154,6 +154,10 @@ describe("hanami-assets", () => {
         url: "/assets/admin/logo-C1EF77E4.png",
         sri: ["sha384-7q5x+ZjZrCoWwyV0BTyc8HUPf1xr+n9l77gwxmwywPWSe0PtopZj1T8NTUPFo0FI"],
       },
+      "admin/nested/image.jpg": {
+        url: "/assets/admin/nested/image-FA518447.jpg",
+        sri: ["sha384-RbjZmXXoS+NuWIfaT/8A1JWcmmNaSVcy78V5zMKFKIXcEDKLKinkGNG/N3EqyOKa"],
+      },
       "admin/background.jpg": {
         url: "/assets/admin/background-SB6NFNOQ.jpg",
         sri: ["sha384-KzOZwTAlOBMvr/np+ZObBUuYlE9fiVV7FN9HJGhwXKTKY3/joV+LAI31fqNvx9C6"],
