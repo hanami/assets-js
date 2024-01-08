@@ -75,19 +75,23 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                 };
                 const processAssetDirectory = (pattern, inputs, options) => {
                     const dirPath = path.dirname(pattern);
-                    const files = fs.readdirSync(dirPath);
+                    const files = fs.readdirSync(dirPath, { recursive: true });
                     const assets = [];
                     files.forEach((file) => {
-                        const srcPath = path.join(dirPath, file);
+                        const srcPath = path.join(dirPath, file.toString());
                         // Skip if the file is already processed by esbuild
                         if (inputs.hasOwnProperty(srcPath)) {
+                            return;
+                        }
+                        // Skip directories and any other non-files
+                        if (!fs.statSync(srcPath).isFile()) {
                             return;
                         }
                         const fileHash = calculateHash(fs.readFileSync(srcPath), options.hash);
                         const fileExtension = path.extname(srcPath);
                         const baseName = path.basename(srcPath, fileExtension);
                         const destFileName = [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
-                        const destPath = path.join(options.destDir, path.relative(dirPath, srcPath).replace(file, destFileName));
+                        const destPath = path.join(options.destDir, path.relative(dirPath, srcPath).replace(path.basename(file.toString()), destFileName));
                         if (fs.lstatSync(srcPath).isDirectory()) {
                             assets.push(...processAssetDirectory(destPath, inputs, options));
                         }
