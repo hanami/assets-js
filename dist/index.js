@@ -14,10 +14,18 @@ export const run = async function (options) {
         esbuildOptions = esbuildOptionsFn(args, esbuildOptions);
     }
     touchManifest(root);
+    // const ctx = await esbuild.context(esbuildOptions);
+    // await ctx.watch().catch(errorHandler);
+    // return [ctx];
     if (args.watch) {
-        const ctx = await esbuild.context(esbuildOptions);
-        await ctx.watch().catch(errorHandler);
-        return ctx;
+        const contexts = [];
+        const splitOptions = splitEsbuildOptions(esbuildOptions);
+        for (const options of splitOptions) {
+            const ctx = await esbuild.context(options);
+            contexts.push(ctx);
+            await ctx.watch().catch(errorHandler);
+        }
+        return contexts;
     }
     else {
         await esbuildMultipleBuilds(esbuildOptions);
@@ -50,8 +58,14 @@ const splitEsbuildOptions = (esbuildOptions) => {
         sliceOptions.entryPoints = entryPoints.filter((entryPoint) => entryPoint.startsWith(slice));
         sliceOptions.external = external.filter((ext) => ext.startsWith(slice));
         if (sliceName) {
-            sliceOptions.entryNames = [sliceName, "[dir]", "[name]-[hash]"].join("/");
-            sliceOptions.assetNames = [sliceName, "[name]-[hash]"].join("/");
+            if (false) {
+                sliceOptions.entryNames = [sliceName, "[dir]", "[name]-[hash]"].join("/");
+                sliceOptions.assetNames = [sliceName, "[name]-[hash]"].join("/");
+            }
+            else {
+                sliceOptions.entryNames = [sliceName, "[dir]", "[name]"].join("/");
+                sliceOptions.assetNames = [sliceName, "[name]"].join("/");
+            }
         }
         return sliceOptions;
     });

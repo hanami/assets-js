@@ -8,5 +8,5 @@ interface RunOptions {
     esbuildOptionsFn?: EsbuildOptionsFn;
 }
 type EsbuildOptionsFn = (args: Args, esbuildOptions: EsbuildOptions) => EsbuildOptions;
-export declare const run: (options?: RunOptions) => Promise<BuildContext | void>;
+export declare const run: (options?: RunOptions) => Promise<BuildContext[] | void>;
 export {};

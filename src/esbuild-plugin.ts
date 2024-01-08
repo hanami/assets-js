@@ -205,8 +205,10 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
           assetsManifest[sourceUrl] = asset;
         }
 
-        const existingManifest = fs.readJsonSync(manifest);
-        const resultManifest = { ...existingManifest, ...assetsManifest };
+        // FIXME: Need a mutex around this
+        // const existingManifest = fs.readJsonSync(manifest);
+        // const resultManifest = { ...existingManifest, ...assetsManifest };
+        const resultManifest = assetsManifest;
 
         // Write assets manifest to the destination directory
         await fs.writeJson(manifest, resultManifest, { spaces: 2 });
