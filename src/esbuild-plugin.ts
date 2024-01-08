@@ -121,14 +121,19 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
           options: PluginOptions,
         ): string[] => {
           const dirPath = path.dirname(pattern);
-          const files = fs.readdirSync(dirPath);
+          const files = fs.readdirSync(dirPath, { recursive: true });
           const assets: string[] = [];
 
           files.forEach((file) => {
-            const srcPath = path.join(dirPath, file);
+            const srcPath = path.join(dirPath, file.toString());
 
             // Skip if the file is already processed by esbuild
             if (inputs.hasOwnProperty(srcPath)) {
+              return;
+            }
+
+            // Skip directories and any other non-files
+            if (!fs.statSync(srcPath).isFile()) {
               return;
             }
 
@@ -139,7 +144,7 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
               [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
             const destPath = path.join(
               options.destDir,
-              path.relative(dirPath, srcPath).replace(file, destFileName),
+              path.relative(dirPath, srcPath).replace(path.basename(file.toString()), destFileName),
             );
 
             if (fs.lstatSync(srcPath).isDirectory()) {
