@@ -27,31 +27,26 @@ const loader: { [ext: string]: Loader } = {
 };
 
 const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
-// FIXME: make cross platform
-const entryPointsMatcher = /(app\/assets\/js\/|slices\/(.*\/)assets\/js\/)/;
 
-const findEntryPoints = (root: string): Record<string, string> => {
+const findEntryPoints = (sliceRoot: string): Record<string, string> => {
   const result: Record<string, string> = {};
 
-  // TODO: should this be done explicitly within the root?
   const entryPoints = globSync([
-    path.join("app", "assets", "js", "**", entryPointExtensions),
-    path.join("slices", "*", "assets", "js", "**", entryPointExtensions),
+    path.join(sliceRoot, "assets", "js", "**", entryPointExtensions),
   ]);
 
   entryPoints.forEach((entryPoint) => {
-    let modifiedPath = entryPoint.replace(entryPointsMatcher, "$2");
-    const relativePath = path.relative(root, modifiedPath);
+    let entryPointPath = entryPoint.replace(sliceRoot + "/assets/js/", "");
 
-    const { dir, name } = path.parse(relativePath);
+    const { dir, name } = path.parse(entryPointPath);
 
     if (dir) {
-      modifiedPath = path.join(dir, name);
+      entryPointPath = path.join(dir, name);
     } else {
-      modifiedPath = name;
+      entryPointPath = name;
     }
 
-    result[modifiedPath] = entryPoint;
+    result[entryPointPath] = entryPoint;
   });
 
   return result;
@@ -98,7 +93,7 @@ export const buildOptions = (root: string, args: Args): EsbuildOptions => {
     minify: true,
     sourcemap: true,
     entryNames: "[dir]/[name]-[hash]",
-    entryPoints: findEntryPoints(root),
+    entryPoints: findEntryPoints(path.join(root, args.path)),
     plugins: [plugin],
   };
 
@@ -122,7 +117,7 @@ export const watchOptions = (root: string, args: Args): EsbuildOptions => {
     minify: false,
     sourcemap: false,
     entryNames: "[dir]/[name]",
-    entryPoints: findEntryPoints(root),
+    entryPoints: findEntryPoints(path.join(root, args.path)),
     plugins: [plugin],
   };
 

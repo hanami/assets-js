@@ -19,26 +19,21 @@ const loader = {
     ".ttf": "file",
 };
 const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
-// FIXME: make cross platform
-const entryPointsMatcher = /(app\/assets\/js\/|slices\/(.*\/)assets\/js\/)/;
-const findEntryPoints = (root) => {
+const findEntryPoints = (sliceRoot) => {
     const result = {};
-    // TODO: should this be done explicitly within the root?
     const entryPoints = globSync([
-        path.join("app", "assets", "js", "**", entryPointExtensions),
-        path.join("slices", "*", "assets", "js", "**", entryPointExtensions),
+        path.join(sliceRoot, "assets", "js", "**", entryPointExtensions),
     ]);
     entryPoints.forEach((entryPoint) => {
-        let modifiedPath = entryPoint.replace(entryPointsMatcher, "$2");
-        const relativePath = path.relative(root, modifiedPath);
-        const { dir, name } = path.parse(relativePath);
+        let entryPointPath = entryPoint.replace(sliceRoot + "/assets/js/", "");
+        const { dir, name } = path.parse(entryPointPath);
         if (dir) {
-            modifiedPath = path.join(dir, name);
+            entryPointPath = path.join(dir, name);
         }
         else {
-            modifiedPath = name;
+            entryPointPath = name;
         }
-        result[modifiedPath] = entryPoint;
+        result[entryPointPath] = entryPoint;
     });
     return result;
 };
@@ -79,7 +74,7 @@ export const buildOptions = (root, args) => {
         minify: true,
         sourcemap: true,
         entryNames: "[dir]/[name]-[hash]",
-        entryPoints: findEntryPoints(root),
+        entryPoints: findEntryPoints(path.join(root, args.path)),
         plugins: [plugin],
     };
     return options;
@@ -100,7 +95,7 @@ export const watchOptions = (root, args) => {
         minify: false,
         sourcemap: false,
         entryNames: "[dir]/[name]",
-        entryPoints: findEntryPoints(root),
+        entryPoints: findEntryPoints(path.join(root, args.path)),
         plugins: [plugin],
     };
     return options;
