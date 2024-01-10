@@ -4,7 +4,6 @@ import crypto from "node:crypto";
 const URL_SEPARATOR = "/";
 export const defaults = {
     root: "",
-    publicDir: "public",
     destDir: path.join("public", "assets"),
     manifestPath: path.join("public", "assets.json"),
     sriAlgorithms: [],

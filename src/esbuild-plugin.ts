@@ -7,7 +7,6 @@ const URL_SEPARATOR = "/";
 
 export interface PluginOptions {
   root: string;
-  publicDir: string;
   destDir: string;
   manifestPath: string;
   sriAlgorithms: Array<string>;
@@ -16,10 +15,9 @@ export interface PluginOptions {
 
 export const defaults: Pick<
   PluginOptions,
-  "root" | "publicDir" | "destDir" | "manifestPath" | "sriAlgorithms" | "hash"
+  "root" | "destDir" | "manifestPath" | "sriAlgorithms" | "hash"
 > = {
   root: "",
-  publicDir: "public",
   destDir: path.join("public", "assets"),
   manifestPath: path.join("public", "assets.json"),
   sriAlgorithms: [],
