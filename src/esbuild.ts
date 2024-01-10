@@ -85,7 +85,7 @@ export const buildOptions = (root: string, args: Args): EsbuildOptions => {
 
   const options: EsbuildOptions = {
     bundle: true,
-    outdir: path.join(root, "public", "assets"),
+    outdir: args.target,
     absWorkingDir: root,
     loader: loader,
     external: externalDirectories(),
@@ -109,7 +109,7 @@ export const watchOptions = (root: string, args: Args): EsbuildOptions => {
 
   const options: EsbuildOptions = {
     bundle: true,
-    outdir: path.join(root, "public", "assets"),
+    outdir: args.target,
     absWorkingDir: root,
     loader: loader,
     external: externalDirectories(),

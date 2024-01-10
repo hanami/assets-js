@@ -1,5 +1,6 @@
 export interface Args {
   path: string;
+  target: string;
   watch: Boolean;
   sri: string[] | null;
 }
@@ -14,6 +15,7 @@ export const parseArgs = (args: string[]): Args => {
 
   return {
     path: result["path"],
+    target: result["target"],
     watch: result.hasOwnProperty("watch"),
     sri: result["sri"]?.split(","),
   };
