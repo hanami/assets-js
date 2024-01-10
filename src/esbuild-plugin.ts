@@ -8,18 +8,15 @@ const URL_SEPARATOR = "/";
 export interface PluginOptions {
   root: string;
   destDir: string;
-  manifestPath: string;
   sriAlgorithms: Array<string>;
   hash: boolean;
 }
 
 export const defaults: Pick<
   PluginOptions,
-  "root" | "destDir" | "manifestPath" | "sriAlgorithms" | "hash"
+  "root" | "sriAlgorithms" | "hash"
 > = {
   root: "",
-  destDir: path.join("public", "assets"),
-  manifestPath: path.join("public", "assets.json"),
   sriAlgorithms: [],
   hash: true,
 };
@@ -29,7 +26,7 @@ interface Asset {
   sri?: Array<string>;
 }
 
-const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
+const hanamiEsbuild = (options: PluginOptions): Plugin => {
   return {
     name: "hanami-esbuild",
 
@@ -37,7 +34,7 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
       build.initialOptions.metafile = true;
       options.root = options.root || process.cwd();
 
-      const manifest = path.join(options.root, options.manifestPath);
+      const manifestPath = path.join(options.root, options.destDir, "assets.json");
       const externalDirs = build.initialOptions.external || [];
 
       build.onEnd(async (result: BuildResult) => {
@@ -191,7 +188,7 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
         }
 
         // Write assets manifest to the destination directory
-        await fs.writeJson(manifest, assetsManifest, { spaces: 2 });
+        await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
       });
     },
   };

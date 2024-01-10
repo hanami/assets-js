@@ -61,6 +61,7 @@ const externalDirectories = () => {
 export const buildOptions = (root, args) => {
     const pluginOptions = {
         ...pluginDefaults,
+        destDir: args.target,
         sriAlgorithms: args.sri || [],
     };
     const plugin = esbuildPlugin(pluginOptions);
@@ -82,6 +83,7 @@ export const buildOptions = (root, args) => {
 export const watchOptions = (root, args) => {
     const pluginOptions = {
         ...pluginDefaults,
+        destDir: args.target,
         hash: false,
     };
     const plugin = esbuildPlugin(pluginOptions);

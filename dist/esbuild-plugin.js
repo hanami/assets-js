@@ -4,18 +4,16 @@ import crypto from "node:crypto";
 const URL_SEPARATOR = "/";
 export const defaults = {
     root: "",
-    destDir: path.join("public", "assets"),
-    manifestPath: path.join("public", "assets.json"),
     sriAlgorithms: [],
     hash: true,
 };
-const hanamiEsbuild = (options = { ...defaults }) => {
+const hanamiEsbuild = (options) => {
     return {
         name: "hanami-esbuild",
         setup(build) {
             build.initialOptions.metafile = true;
             options.root = options.root || process.cwd();
-            const manifest = path.join(options.root, options.manifestPath);
+            const manifestPath = path.join(options.root, options.destDir, "assets.json");
             const externalDirs = build.initialOptions.external || [];
             build.onEnd(async (result) => {
                 const outputs = result.metafile?.outputs;
@@ -127,7 +125,7 @@ const hanamiEsbuild = (options = { ...defaults }) => {
                     assetsManifest[sourceUrl] = asset;
                 }
                 // Write assets manifest to the destination directory
-                await fs.writeJson(manifest, assetsManifest, { spaces: 2 });
+                await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
             });
         },
     };

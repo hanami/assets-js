@@ -61,11 +61,11 @@ describe("hanami-assets", () => {
     // const sliceAssetExists2 = await fs.pathExists(sliceAsset2);
     // expect(sliceAssetExists2).toBe(true);
 
-    const manifestExists = await fs.pathExists(path.join(dest, "public/assets.json"));
+    const manifestExists = await fs.pathExists(path.join(dest, "public/assets/assets.json"));
     expect(manifestExists).toBe(true);
 
     // Read and parse the manifest file
-    const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
+    const manifestContent = await fs.readFile(path.join(dest, "public/assets/assets.json"), "utf-8");
     const manifest = JSON.parse(manifestContent);
 
     // Check if the manifest contains the correct file paths
