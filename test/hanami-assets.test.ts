@@ -87,7 +87,7 @@ describe("hanami-assets", () => {
     await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
 
     // Compile assets
-    await assets.run({ root: dest, argv: ["--path=app --sri=sha256,sha384,sha512"] });
+    await assets.run({ root: dest, argv: ["--path=app", "--sri=sha256,sha384,sha512"] });
 
     // Read and parse the manifest file
     const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
@@ -110,7 +110,7 @@ describe("hanami-assets", () => {
     fs.copySync(path.join(__dirname, "fixtures", "todo"), dest);
 
     // Compile assets
-    await assets.run({ root: dest, argv: ["--path=app --sri=sha384"] });
+    await assets.run({ root: dest, argv: ["--path=app", "--sri=sha384"] });
 
     // Read and parse the manifest file
     const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
@@ -170,7 +170,7 @@ describe("hanami-assets", () => {
       const imageAsset = path.join(dest, "public", "assets", "background.jpg");
 
       // Watch for asset changes
-      let ctx = await assets.run({ root: dest, argv: ["--path=app --watch"] });
+      let ctx = await assets.run({ root: dest, argv: ["--path=app", "--watch"] });
 
       await fs.writeFile(entryPoint, "console.log('Hello, Watch!');");
 
