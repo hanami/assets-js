@@ -17,13 +17,14 @@ async function createTestEnvironment() {
   await fs.ensureDir(path.join(dest, "slices/metrics/assets/js"));
   await fs.ensureDir(path.join(dest, "public"));
 
+  console.log(dest);
   process.chdir(dest);
 }
 
 // Helper function to clean up the test environment
 async function cleanTestEnvironment() {
   process.chdir(originalWorkingDir);
-  await fs.remove(dest); // Comment this line to manually inspect precompile results
+  // await fs.remove(dest); // Comment this line to manually inspect precompile results
 }
 
 describe("hanami-assets", () => {
@@ -35,13 +36,12 @@ describe("hanami-assets", () => {
     await cleanTestEnvironment();
   });
 
-  test("copies assets from app/assets to public/assets and generates a manifest file", async () => {
+  test("copies assets from the app to public/assets and generates a manifest file", async () => {
+    // Prepate both app and assets slices to make it clear the slice assets are _not_ compiled here
     const entryPoint1 = path.join(dest, "app/assets/js/app.js");
     const entryPoint2 = path.join(dest, "slices/admin/assets/js/app.js");
-    const entryPoint3 = path.join(dest, "slices/metrics/assets/js/app.ts");
     await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
     await fs.writeFile(entryPoint2, "console.log('Hello, Admin!');");
-    await fs.writeFile(entryPoint3, "console.log('Hello, Metrics!');");
 
     // Compile assets
     await assets.run({ root: dest, argv: ["--path=app", "--target=public/assets"] });
@@ -50,16 +50,6 @@ describe("hanami-assets", () => {
     const appAsset = globSync(path.join("public/assets/app-*.js"))[0];
     const appAssetExists = await fs.pathExists(appAsset);
     expect(appAssetExists).toBe(true);
-
-    // FIXME: this path should take into account the file hashing in the file name
-    // const sliceAsset1 = globSync(path.join("public/assets/admin/app-*.js"))[0];
-    // const sliceAssetExists1 = await fs.pathExists(sliceAsset1);
-    // expect(sliceAssetExists1).toBe(true);
-
-    // FIXME: this path should take into account the file hashing in the file name
-    // const sliceAsset2 = globSync(path.join("public/assets/metrics/app-*.js"))[0];
-    // const sliceAssetExists2 = await fs.pathExists(sliceAsset2);
-    // expect(sliceAssetExists2).toBe(true);
 
     const manifestExists = await fs.pathExists(path.join(dest, "public/assets/assets.json"));
     expect(manifestExists).toBe(true);
@@ -70,15 +60,39 @@ describe("hanami-assets", () => {
 
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
-      // "admin/app.js": {
-      //   url: "/assets/admin/app-NLRESL5A.js",
-      // },
       "app.js": {
         url: "/assets/app-JLSTK5SN.js",
       },
-      // "metrics/app.js": {
-      //   url: "/assets/metrics/app-27Z7ZALS.js",
-      // },
+    });
+  });
+
+  test("copies assets from an admin slice to public/assets/admin and generates a manifest file", async () => {
+    // Prepate both app and assets slices to make it clear the app assets are _not_ compiled here
+    const entryPoint1 = path.join(dest, "app/assets/js/app.js");
+    const entryPoint2 = path.join(dest, "slices/admin/assets/js/app.js");
+    await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
+    await fs.writeFile(entryPoint2, "console.log('Hello, Admin!');");
+
+    // Compile assets
+    await assets.run({ root: dest, argv: ["--path=slices/admin", "--target=public/assets/admin"] });
+
+    // FIXME: this path should take into account the file hashing in the file name
+    const sliceAsset = globSync(path.join("public/assets/admin/app-*.js"))[0];
+    const sliceAssetExists = await fs.pathExists(sliceAsset);
+    expect(sliceAssetExists).toBe(true);
+
+    const manifestExists = await fs.pathExists(path.join(dest, "public/assets/admin/assets.json"));
+    expect(manifestExists).toBe(true);
+
+    // Read and parse the manifest file
+    const manifestContent = await fs.readFile(path.join(dest, "public/assets/admin/assets.json"), "utf-8");
+    const manifest = JSON.parse(manifestContent);
+
+    // Check if the manifest contains the correct file paths
+    expect(manifest).toEqual({
+      "app.js": {  // FIXME THIS IS RETURNING admin/app.js, WE DON'T WANT THAT NAMESPACINGt
+        url: "/assets/admin/app-ITGLRDE7.js",
+      },
     });
   });
 
