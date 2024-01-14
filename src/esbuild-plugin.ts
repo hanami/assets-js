@@ -194,60 +194,39 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
         });
 
+        function prepareAsset(destinationUrl: string): Asset {
+          var asset: Asset = { url: destinationUrl };
+
+          if (options.sriAlgorithms.length > 0) {
+            asset.sri = [];
+
+            for (const algorithm of options.sriAlgorithms) {
+              const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, destinationUrl);
+              asset.sri.push(subresourceIntegrity);
+            }
+          }
+
+          return asset;
+        }
 
         // Process entrypoints
-        // WIP
         for (const compiledEntryPoint in compiledEntryPoints) {
           const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
           const sourceUrl = compiledEntryPoints[compiledEntryPoint].replace(`${options.baseDir}/assets/js/`, "")
 
-          var asset: Asset = { url: destinationUrl };
-
-          if (options.sriAlgorithms.length > 0) {
-            asset.sri = [];
-
-            for (const algorithm of options.sriAlgorithms) {
-              const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, compiledEntryPoint);
-              asset.sri.push(subresourceIntegrity);
-            }
-          }
-
-          assetsManifest[sourceUrl] = asset;
+          assetsManifest[sourceUrl] = prepareAsset(destinationUrl);
         }
 
         // Process copied assets
-
-        // TODO: rename var... these are not being processed, they're being put in the manifest
-        // assetsToManifest?
-        // const assetsToProcess = Object.keys(outputs).concat(copiedAssets);
-        const assetsToProcess = copiedAssets;
-
-        for (const assetToProcess of assetsToProcess) {
-          if (assetToProcess.endsWith(".map")) {
+        for (const copiedAsset of copiedAssets) {
+          if (copiedAsset.endsWith(".map")) {
             continue;
           }
 
-          console.log(assetToProcess);
-          console.log(options)
-          const destinationUrl = calulateDestinationUrl(assetToProcess);
-          // const sourceUrl = calulateSourceUrl(destinationUrl);
-          const sourceUrl = calulateSourceUrl(assetToProcess);
+          const destinationUrl = calulateDestinationUrl(copiedAsset);
+          const sourceUrl = calulateSourceUrl(copiedAsset);
 
-          var asset: Asset = { url: destinationUrl };
-
-          if (options.sriAlgorithms.length > 0) {
-            asset.sri = [];
-
-            for (const algorithm of options.sriAlgorithms) {
-              const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, assetToProcess);
-              asset.sri.push(subresourceIntegrity);
-            }
-          }
-
-          // console.log(destinationUrl)
-          // console.log(sourceUrl)
-          // console.log(asset)
-          assetsManifest[sourceUrl] = asset;
+          assetsManifest[sourceUrl] = prepareAsset(destinationUrl);
         }
 
         // Write assets manifest to the destination directory
