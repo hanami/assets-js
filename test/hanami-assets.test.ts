@@ -165,7 +165,7 @@ describe("hanami-assets", () => {
       const imageAsset = path.join(dest, "public", "assets", "background.jpg");
 
       // Watch for asset changes
-      let ctx = await assets.run({ root: dest, argv: ["--path=app", "--watch"] });
+      let ctx = await assets.run({ root: dest, argv: ["--path=app", "--target=public/assets", "--watch"] });
 
       await fs.writeFile(entryPoint, "console.log('Hello, Watch!');");
 
@@ -200,11 +200,11 @@ describe("hanami-assets", () => {
       // Check if the asset has the expected contents
       expect(assetContent).toMatch('console.log("Hello, Watch!");');
 
-      const manifestExists = await fs.pathExists(path.join(dest, "public/assets.json"));
+      const manifestExists = await fs.pathExists(path.join(dest, "public/assets/assets.json"));
       expect(manifestExists).toBe(true);
 
       // Read and parse the manifest file
-      const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
+      const manifestContent = await fs.readFile(path.join(dest, "public/assets/assets.json"), "utf-8");
       const manifest = JSON.parse(manifestContent);
 
       expect(manifest["background.jpg"]).toEqual({
