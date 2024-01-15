@@ -19,7 +19,6 @@ async function createTestEnvironment() {
   await fs.ensureDir(path.join(dest, "slices/admin/assets/fonts"));
   await fs.ensureDir(path.join(dest, "public"));
 
-  console.log(dest);
   process.chdir(dest);
 }
 

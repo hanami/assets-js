@@ -33,8 +33,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
       options.root = options.root || process.cwd(); // TODO: can't this always be passed in?
 
       const manifestPath = path.join(options.root, options.destDir, "assets.json");
-      // console.log("externalDirs")
-      // console.log(build.initialOptions.external)
       const externalDirs = build.initialOptions.external || [];
 
       build.onEnd(async (result: BuildResult) => {
@@ -133,12 +131,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           const files = fs.readdirSync(dirPath, { recursive: true });
           const assets: string[][] = [];
 
-          // console.log(`processAssetDirectory for ${pattern}`)
-          // console.log(dirPath)
-          // console.log(files)
-
-          // console.log(inputs)
-
           files.forEach((file) => {
             const srcPath = path.join(dirPath, file.toString());
 
@@ -176,8 +168,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         if (typeof outputs === "undefined") {
           return;
         }
-
-        // console.log(outputs)
 
         // TODO: change name of `inputs` to something clearer...
         const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);

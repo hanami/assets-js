@@ -14,8 +14,6 @@ const hanamiEsbuild = (options) => {
             build.initialOptions.metafile = true;
             options.root = options.root || process.cwd(); // TODO: can't this always be passed in?
             const manifestPath = path.join(options.root, options.destDir, "assets.json");
-            // console.log("externalDirs")
-            // console.log(build.initialOptions.external)
             const externalDirs = build.initialOptions.external || [];
             build.onEnd(async (result) => {
                 const outputs = result.metafile?.outputs;
@@ -89,10 +87,6 @@ const hanamiEsbuild = (options) => {
                     const dirPath = path.dirname(pattern);
                     const files = fs.readdirSync(dirPath, { recursive: true });
                     const assets = [];
-                    // console.log(`processAssetDirectory for ${pattern}`)
-                    // console.log(dirPath)
-                    // console.log(files)
-                    // console.log(inputs)
                     files.forEach((file) => {
                         const srcPath = path.join(dirPath, file.toString());
                         // Skip if the file is already processed by esbuild
@@ -121,7 +115,6 @@ const hanamiEsbuild = (options) => {
                 if (typeof outputs === "undefined") {
                     return;
                 }
-                // console.log(outputs)
                 // TODO: change name of `inputs` to something clearer...
                 const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
                 // TODO: use a more explicit type than this. an array of records with named properties?
