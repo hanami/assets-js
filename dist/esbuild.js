@@ -21,9 +21,7 @@ const loader = {
 const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
 const findEntryPoints = (sliceRoot) => {
     const result = {};
-    const entryPoints = globSync([
-        path.join(sliceRoot, "assets", "js", "**", entryPointExtensions),
-    ]);
+    const entryPoints = globSync([path.join(sliceRoot, "assets", "js", "**", entryPointExtensions)]);
     entryPoints.forEach((entryPoint) => {
         let entryPointPath = entryPoint.replace(sliceRoot + "/assets/js/", "");
         const { dir, name } = path.parse(entryPointPath);
@@ -37,12 +35,8 @@ const findEntryPoints = (sliceRoot) => {
     });
     return result;
 };
-// TODO: feels like this really should be passed a root too, to become the cwd for globSync
-const externalDirectories = () => {
-    const assetDirsPattern = [
-        path.join("app", "assets", "*"),
-        path.join("slices", "*", "assets", "*"),
-    ];
+const findExternalDirectories = (basePath) => {
+    const assetDirsPattern = [path.join(basePath, "assets", "*")];
     const excludeDirs = ["js", "css"];
     try {
         const dirs = globSync(assetDirsPattern, { nodir: false });
@@ -61,6 +55,7 @@ const externalDirectories = () => {
 export const buildOptions = (root, args) => {
     const pluginOptions = {
         ...pluginDefaults,
+        baseDir: args.path,
         destDir: args.target,
         sriAlgorithms: args.sri || [],
     };
@@ -70,7 +65,7 @@ export const buildOptions = (root, args) => {
         outdir: args.target,
         absWorkingDir: root,
         loader: loader,
-        external: externalDirectories(),
+        external: findExternalDirectories(path.join(root, args.path)),
         logLevel: "info",
         minify: true,
         sourcemap: true,
@@ -83,6 +78,7 @@ export const buildOptions = (root, args) => {
 export const watchOptions = (root, args) => {
     const pluginOptions = {
         ...pluginDefaults,
+        baseDir: args.path,
         destDir: args.target,
         hash: false,
     };
@@ -92,7 +88,7 @@ export const watchOptions = (root, args) => {
         outdir: args.target,
         absWorkingDir: root,
         loader: loader,
-        external: externalDirectories(),
+        external: findExternalDirectories(path.join(root, args.path)),
         logLevel: "info",
         minify: false,
         sourcemap: false,

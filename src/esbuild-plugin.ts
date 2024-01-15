@@ -36,23 +36,13 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
       options.root = options.root || process.cwd(); // TODO: can't this always be passed in?
 
       const manifestPath = path.join(options.root, options.destDir, "assets.json");
+      // console.log("externalDirs")
+      // console.log(build.initialOptions.external)
       const externalDirs = build.initialOptions.external || [];
 
       build.onEnd(async (result: BuildResult) => {
         const outputs = result.metafile?.outputs;
-        console.log(outputs)
         const assetsManifest: Record<string, Asset> = {};
-
-        const calulateSourceUrl = (str: string): string => {
-          // console.log(str)
-          // console.log(options)
-
-          // .replace(/\/assets\//, "")
-          console.log(str)
-          return normalizeUrl(str)
-            .replace(options.baseDir, "")
-            .replace(/-[A-Z0-9]{8}/, "");
-        };
 
         const calulateDestinationUrl = (str: string): string => {
           return normalizeUrl(str).replace(/public/, "");
@@ -79,7 +69,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
           return result.slice(0, 8).toUpperCase();
         };
-
 
         // Transforms the esbuild metafile outputs into an object containing mappings of outputs
         // generated from entryPoints only.
@@ -140,10 +129,14 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           pattern: string,
           compiledEntryPoints: Record<string, string>,
           options: PluginOptions,
-        ): string[] => {
+        ): string[][] => {
           const dirPath = path.dirname(pattern);
           const files = fs.readdirSync(dirPath, { recursive: true });
-          const assets: string[] = [];
+          const assets: string[][] = [];
+
+          // console.log(`processAssetDirectory for ${pattern}`)
+          // console.log(dirPath)
+          // console.log(files)
 
           // console.log(inputs)
 
@@ -174,7 +167,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
               assets.push(...processAssetDirectory(destPath, compiledEntryPoints, options));
             } else {
               copyAsset(srcPath, destPath);
-              assets.push(destPath);
+              assets.push([srcPath, destPath]);
             }
           });
 
@@ -189,7 +182,9 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         // TODO: change name of `inputs` to something clearer...
         const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
-        const copiedAssets: string[] = [];
+
+        // TODO: use a more explicit type than this. an array of records with named properties?
+        const copiedAssets: string[][] = [];
         externalDirs.forEach((pattern) => {
           copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
         });
@@ -219,12 +214,17 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         // Process copied assets
         for (const copiedAsset of copiedAssets) {
-          if (copiedAsset.endsWith(".map")) {
+          // TODO: I wonder if we can skip .map files earlier
+          if (copiedAsset[0].endsWith(".map")) {
             continue;
           }
 
-          const destinationUrl = calulateDestinationUrl(copiedAsset);
-          const sourceUrl = calulateSourceUrl(copiedAsset);
+          const destinationUrl = calulateDestinationUrl(copiedAsset[1]);
+
+          // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
+          var sourceUrl = copiedAsset[0].replace(path.join(options.root, options.baseDir, "assets") + "/", "")
+          // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
+          sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
 
           assetsManifest[sourceUrl] = prepareAsset(destinationUrl);
         }

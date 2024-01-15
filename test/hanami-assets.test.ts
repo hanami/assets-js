@@ -12,8 +12,9 @@ const watchTimeout = 60000; // ms (60 seconds)
 async function createTestEnvironment() {
   // Create temporary directories
   await fs.ensureDir(path.join(dest, "app/assets/js"));
-  await fs.ensureDir(path.join(dest, "app/assets/images"));
+  await fs.ensureDir(path.join(dest, "app/assets/images/nested"));
   await fs.ensureDir(path.join(dest, "slices/admin/assets/js"));
+  await fs.ensureDir(path.join(dest, "slices/admin/assets/images/nested"));
   await fs.ensureDir(path.join(dest, "slices/metrics/assets/js"));
   await fs.ensureDir(path.join(dest, "public"));
 
@@ -37,11 +38,16 @@ describe("hanami-assets", () => {
   });
 
   test("copies assets from the app to public/assets and generates a manifest file", async () => {
-    // Prepate both app and assets slices to make it clear the slice assets are _not_ compiled here
-    const entryPoint1 = path.join(dest, "app/assets/js/app.js");
-    const entryPoint2 = path.join(dest, "slices/admin/assets/js/app.js");
-    await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
-    await fs.writeFile(entryPoint2, "console.log('Hello, Admin!');");
+    // Prepare both app and assets slices to make it clear the slice assets are _not_ compiled here
+    const appEntryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(appEntryPoint, "console.log('Hello, World!');");
+    const appImage = path.join(dest, "app/assets/images/nested/app-image.jpg");
+    await fs.writeFile(appImage, "");
+
+    const sliceEntryPoint = path.join(dest, "slices/admin/assets/js/app.js");
+    await fs.writeFile(sliceEntryPoint, "console.log('Hello, Admin!');");
+    const sliceImage = path.join(dest, "slices/admin/assets/images/nested/slice-image.jpg");
+    await fs.writeFile(sliceImage, "");
 
     // Compile assets
     await assets.run({ root: dest, argv: ["--path=app", "--target=public/assets"] });
@@ -63,15 +69,23 @@ describe("hanami-assets", () => {
       "app.js": {
         url: "/assets/app-JLSTK5SN.js",
       },
+      "nested/app-image.jpg": {
+        url: "/assets/nested/app-image-E3B0C442.jpg",
+      },
     });
   });
 
   test("copies assets from an admin slice to public/assets/admin and generates a manifest file", async () => {
     // Prepate both app and assets slices to make it clear the app assets are _not_ compiled here
-    const entryPoint1 = path.join(dest, "app/assets/js/app.js");
-    const entryPoint2 = path.join(dest, "slices/admin/assets/js/app.js");
-    await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
-    await fs.writeFile(entryPoint2, "console.log('Hello, Admin!');");
+    const appEntryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(appEntryPoint, "console.log('Hello, World!');");
+    const appImage = path.join(dest, "app/assets/images/nested/app-image.jpg");
+    await fs.writeFile(appImage, "");
+
+    const sliceEntryPoint = path.join(dest, "slices/admin/assets/js/app.js");
+    await fs.writeFile(sliceEntryPoint, "console.log('Hello, Admin!');");
+    const sliceImage = path.join(dest, "slices/admin/assets/images/nested/slice-image.jpg");
+    await fs.writeFile(sliceImage, "");
 
     // Compile assets
     await assets.run({ root: dest, argv: ["--path=slices/admin", "--target=public/assets/admin"] });
@@ -90,8 +104,11 @@ describe("hanami-assets", () => {
 
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
-      "app.js": {  // FIXME THIS IS RETURNING admin/app.js, WE DON'T WANT THAT NAMESPACINGt
+      "app.js": {
         url: "/assets/admin/app-ITGLRDE7.js",
+      },
+      "nested/slice-image.jpg": {
+        url: "/assets/admin/nested/slice-image-E3B0C442.jpg",
       },
     });
   });

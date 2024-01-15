@@ -1,6 +1,7 @@
 import { Plugin } from "esbuild";
 export interface PluginOptions {
     root: string;
+    baseDir: string;
     destDir: string;
     sriAlgorithms: Array<string>;
     hash: boolean;

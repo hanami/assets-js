@@ -12,17 +12,14 @@ const hanamiEsbuild = (options) => {
         name: "hanami-esbuild",
         setup(build) {
             build.initialOptions.metafile = true;
-            options.root = options.root || process.cwd();
+            options.root = options.root || process.cwd(); // TODO: can't this always be passed in?
             const manifestPath = path.join(options.root, options.destDir, "assets.json");
+            // console.log("externalDirs")
+            // console.log(build.initialOptions.external)
             const externalDirs = build.initialOptions.external || [];
             build.onEnd(async (result) => {
                 const outputs = result.metafile?.outputs;
                 const assetsManifest = {};
-                const calulateSourceUrl = (str) => {
-                    return normalizeUrl(str)
-                        .replace(/\/assets\//, "")
-                        .replace(/-[A-Z0-9]{8}/, "");
-                };
                 const calulateDestinationUrl = (str) => {
                     return normalizeUrl(str).replace(/public/, "");
                 };
@@ -42,17 +39,35 @@ const hanamiEsbuild = (options) => {
                     const result = crypto.createHash("sha256").update(hashBytes).digest("hex");
                     return result.slice(0, 8).toUpperCase();
                 };
-                function extractEsbuildInputs(inputData) {
-                    const inputs = {};
-                    for (const key in inputData) {
-                        const entry = inputData[key];
-                        if (entry.inputs) {
-                            for (const inputKey in entry.inputs) {
-                                inputs[inputKey] = true;
-                            }
+                // Transforms the esbuild metafile outputs into an object containing mappings of outputs
+                // generated from entryPoints only.
+                //
+                // Converts this:
+                //
+                // {
+                //   'public/assets/admin/app-ITGLRDE7.js': {
+                //     imports: [],
+                //     exports: [],
+                //     entryPoint: 'slices/admin/assets/js/app.js',
+                //     inputs: { 'slices/admin/assets/js/app.js': [Object] },
+                //     bytes: 95
+                //   }
+                // }
+                //
+                //  To this:
+                //
+                // {
+                //   'public/assets/admin/app-ITGLRDE7.js': 'slices/admin/assets/js/app.js'
+                // }
+                function extractEsbuildCompiledEntrypoints(esbuildOutputs) {
+                    const entryPoints = {};
+                    for (const key in esbuildOutputs) {
+                        const output = esbuildOutputs[key];
+                        if (output.entryPoint) {
+                            entryPoints[key] = output.entryPoint;
                         }
                     }
-                    return inputs;
+                    return entryPoints;
                 }
                 // TODO: profile the current implementation vs blindly copying the asset
                 const copyAsset = (srcPath, destPath) => {
@@ -70,14 +85,18 @@ const hanamiEsbuild = (options) => {
                     fs.copyFileSync(srcPath, destPath);
                     return;
                 };
-                const processAssetDirectory = (pattern, inputs, options) => {
+                const processAssetDirectory = (pattern, compiledEntryPoints, options) => {
                     const dirPath = path.dirname(pattern);
                     const files = fs.readdirSync(dirPath, { recursive: true });
                     const assets = [];
+                    // console.log(`processAssetDirectory for ${pattern}`)
+                    // console.log(dirPath)
+                    // console.log(files)
+                    // console.log(inputs)
                     files.forEach((file) => {
                         const srcPath = path.join(dirPath, file.toString());
                         // Skip if the file is already processed by esbuild
-                        if (inputs.hasOwnProperty(srcPath)) {
+                        if (compiledEntryPoints.hasOwnProperty(srcPath)) {
                             return;
                         }
                         // Skip directories and any other non-files
@@ -90,11 +109,11 @@ const hanamiEsbuild = (options) => {
                         const destFileName = [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
                         const destPath = path.join(options.destDir, path.relative(dirPath, srcPath).replace(path.basename(file.toString()), destFileName));
                         if (fs.lstatSync(srcPath).isDirectory()) {
-                            assets.push(...processAssetDirectory(destPath, inputs, options));
+                            assets.push(...processAssetDirectory(destPath, compiledEntryPoints, options));
                         }
                         else {
                             copyAsset(srcPath, destPath);
-                            assets.push(destPath);
+                            assets.push([srcPath, destPath]);
                         }
                     });
                     return assets;
@@ -102,27 +121,43 @@ const hanamiEsbuild = (options) => {
                 if (typeof outputs === "undefined") {
                     return;
                 }
-                const inputs = extractEsbuildInputs(outputs);
+                // console.log(outputs)
+                // TODO: change name of `inputs` to something clearer...
+                const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
+                // TODO: use a more explicit type than this. an array of records with named properties?
                 const copiedAssets = [];
                 externalDirs.forEach((pattern) => {
-                    copiedAssets.push(...processAssetDirectory(pattern, inputs, options));
+                    copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
                 });
-                const assetsToProcess = Object.keys(outputs).concat(copiedAssets);
-                for (const assetToProcess of assetsToProcess) {
-                    if (assetToProcess.endsWith(".map")) {
-                        continue;
-                    }
-                    const destinationUrl = calulateDestinationUrl(assetToProcess);
-                    const sourceUrl = calulateSourceUrl(destinationUrl);
+                function prepareAsset(destinationUrl) {
                     var asset = { url: destinationUrl };
                     if (options.sriAlgorithms.length > 0) {
                         asset.sri = [];
                         for (const algorithm of options.sriAlgorithms) {
-                            const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, assetToProcess);
+                            const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, destinationUrl);
                             asset.sri.push(subresourceIntegrity);
                         }
                     }
-                    assetsManifest[sourceUrl] = asset;
+                    return asset;
+                }
+                // Process entrypoints
+                for (const compiledEntryPoint in compiledEntryPoints) {
+                    const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
+                    const sourceUrl = compiledEntryPoints[compiledEntryPoint].replace(`${options.baseDir}/assets/js/`, "");
+                    assetsManifest[sourceUrl] = prepareAsset(destinationUrl);
+                }
+                // Process copied assets
+                for (const copiedAsset of copiedAssets) {
+                    // TODO: I wonder if we can skip .map files earlier
+                    if (copiedAsset[0].endsWith(".map")) {
+                        continue;
+                    }
+                    const destinationUrl = calulateDestinationUrl(copiedAsset[1]);
+                    // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
+                    var sourceUrl = copiedAsset[0].replace(path.join(options.root, options.baseDir, "assets") + "/", "");
+                    // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
+                    sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
+                    assetsManifest[sourceUrl] = prepareAsset(destinationUrl);
                 }
                 // Write assets manifest to the destination directory
                 await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });

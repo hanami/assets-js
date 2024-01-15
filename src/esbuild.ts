@@ -31,9 +31,7 @@ const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
 const findEntryPoints = (sliceRoot: string): Record<string, string> => {
   const result: Record<string, string> = {};
 
-  const entryPoints = globSync([
-    path.join(sliceRoot, "assets", "js", "**", entryPointExtensions),
-  ]);
+  const entryPoints = globSync([path.join(sliceRoot, "assets", "js", "**", entryPointExtensions)]);
 
   entryPoints.forEach((entryPoint) => {
     let entryPointPath = entryPoint.replace(sliceRoot + "/assets/js/", "");
@@ -52,13 +50,8 @@ const findEntryPoints = (sliceRoot: string): Record<string, string> => {
   return result;
 };
 
-// TODO: feels like this really should be passed a root too, to become the cwd for globSync
-const externalDirectories = (): string[] => {
-  const assetDirsPattern = [
-    path.join("app", "assets", "*"),
-    path.join("slices", "*", "assets", "*"),
-  ];
-
+const findExternalDirectories = (basePath: string): string[] => {
+  const assetDirsPattern = [path.join(basePath, "assets", "*")];
   const excludeDirs = ["js", "css"];
 
   try {
@@ -90,7 +83,7 @@ export const buildOptions = (root: string, args: Args): EsbuildOptions => {
     outdir: args.target,
     absWorkingDir: root,
     loader: loader,
-    external: externalDirectories(),
+    external: findExternalDirectories(path.join(root, args.path)),
     logLevel: "info",
     minify: true,
     sourcemap: true,
@@ -116,7 +109,7 @@ export const watchOptions = (root: string, args: Args): EsbuildOptions => {
     outdir: args.target,
     absWorkingDir: root,
     loader: loader,
-    external: externalDirectories(),
+    external: findExternalDirectories(path.join(root, args.path)),
     logLevel: "info",
     minify: false,
     sourcemap: false,
