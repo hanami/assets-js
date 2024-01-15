@@ -114,14 +114,14 @@ describe("hanami-assets", () => {
   });
 
   test("generates SRI", async () => {
-    const entryPoint1 = path.join(dest, "app/assets/js/app.js");
-    await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
+    const appEntryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(appEntryPoint, "console.log('Hello, World!');");
 
     // Compile assets
-    await assets.run({ root: dest, argv: ["--path=app", "--sri=sha256,sha384,sha512"] });
+    await assets.run({ root: dest, argv: ["--path=app", "--target=public/assets", "--sri=sha256,sha384,sha512"] });
 
     // Read and parse the manifest file
-    const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
+    const manifestContent = await fs.readFile(path.join(dest, "public/assets/assets.json"), "utf-8");
     const manifest = JSON.parse(manifestContent);
 
     // Check if the manifest contains the correct file paths

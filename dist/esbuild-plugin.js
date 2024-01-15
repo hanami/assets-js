@@ -129,12 +129,12 @@ const hanamiEsbuild = (options) => {
                 externalDirs.forEach((pattern) => {
                     copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
                 });
-                function prepareAsset(destinationUrl) {
+                function prepareAsset(assetPath, destinationUrl) {
                     var asset = { url: destinationUrl };
                     if (options.sriAlgorithms.length > 0) {
                         asset.sri = [];
                         for (const algorithm of options.sriAlgorithms) {
-                            const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, destinationUrl);
+                            const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, path.join(options.root, assetPath));
                             asset.sri.push(subresourceIntegrity);
                         }
                     }
@@ -144,7 +144,7 @@ const hanamiEsbuild = (options) => {
                 for (const compiledEntryPoint in compiledEntryPoints) {
                     const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
                     const sourceUrl = compiledEntryPoints[compiledEntryPoint].replace(`${options.baseDir}/assets/js/`, "");
-                    assetsManifest[sourceUrl] = prepareAsset(destinationUrl);
+                    assetsManifest[sourceUrl] = prepareAsset(compiledEntryPoint, destinationUrl);
                 }
                 // Process copied assets
                 for (const copiedAsset of copiedAssets) {
@@ -157,7 +157,7 @@ const hanamiEsbuild = (options) => {
                     var sourceUrl = copiedAsset[0].replace(path.join(options.root, options.baseDir, "assets") + "/", "");
                     // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
                     sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
-                    assetsManifest[sourceUrl] = prepareAsset(destinationUrl);
+                    assetsManifest[sourceUrl] = prepareAsset(copiedAsset[1], destinationUrl);
                 }
                 // Write assets manifest to the destination directory
                 await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });

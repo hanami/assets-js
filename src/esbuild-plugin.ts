@@ -189,14 +189,14 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
         });
 
-        function prepareAsset(destinationUrl: string): Asset {
+        function prepareAsset(assetPath: string, destinationUrl: string): Asset {
           var asset: Asset = { url: destinationUrl };
 
           if (options.sriAlgorithms.length > 0) {
             asset.sri = [];
 
             for (const algorithm of options.sriAlgorithms) {
-              const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, destinationUrl);
+              const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, path.join(options.root, assetPath));
               asset.sri.push(subresourceIntegrity);
             }
           }
@@ -209,7 +209,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
           const sourceUrl = compiledEntryPoints[compiledEntryPoint].replace(`${options.baseDir}/assets/js/`, "")
 
-          assetsManifest[sourceUrl] = prepareAsset(destinationUrl);
+          assetsManifest[sourceUrl] = prepareAsset(compiledEntryPoint, destinationUrl);
         }
 
         // Process copied assets
@@ -226,7 +226,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
           sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
 
-          assetsManifest[sourceUrl] = prepareAsset(destinationUrl);
+          assetsManifest[sourceUrl] = prepareAsset(copiedAsset[1], destinationUrl);
         }
 
         // Write assets manifest to the destination directory
