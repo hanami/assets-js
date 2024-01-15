@@ -26,7 +26,7 @@ async function createTestEnvironment() {
 // Helper function to clean up the test environment
 async function cleanTestEnvironment() {
   process.chdir(originalWorkingDir);
-  // await fs.remove(dest); // Comment this line to manually inspect precompile results
+  await fs.remove(dest); // Comment this line to manually inspect precompile results
 }
 
 describe("hanami-assets", () => {
