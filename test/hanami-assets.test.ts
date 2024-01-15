@@ -13,9 +13,10 @@ async function createTestEnvironment() {
   // Create temporary directories
   await fs.ensureDir(path.join(dest, "app/assets/js"));
   await fs.ensureDir(path.join(dest, "app/assets/images/nested"));
+  await fs.ensureDir(path.join(dest, "app/assets/fonts"));
   await fs.ensureDir(path.join(dest, "slices/admin/assets/js"));
   await fs.ensureDir(path.join(dest, "slices/admin/assets/images/nested"));
-  await fs.ensureDir(path.join(dest, "slices/metrics/assets/js"));
+  await fs.ensureDir(path.join(dest, "slices/admin/assets/fonts"));
   await fs.ensureDir(path.join(dest, "public"));
 
   console.log(dest);
@@ -42,7 +43,9 @@ describe("hanami-assets", () => {
     const appEntryPoint = path.join(dest, "app/assets/js/app.js");
     await fs.writeFile(appEntryPoint, "console.log('Hello, World!');");
     const appImage = path.join(dest, "app/assets/images/nested/app-image.jpg");
-    await fs.writeFile(appImage, "");
+    await fs.writeFile(appImage, "app-image");
+    const appFont = path.join(dest, "app/assets/fonts/app-font.otf");
+    await fs.writeFile(appFont, "app-font");
 
     const sliceEntryPoint = path.join(dest, "slices/admin/assets/js/app.js");
     await fs.writeFile(sliceEntryPoint, "console.log('Hello, Admin!');");
@@ -66,11 +69,14 @@ describe("hanami-assets", () => {
 
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
+      "app-font.otf": {
+        url: "/assets/app-font-E47AB73F.otf",
+      },
       "app.js": {
         url: "/assets/app-JLSTK5SN.js",
       },
       "nested/app-image.jpg": {
-        url: "/assets/nested/app-image-E3B0C442.jpg",
+        url: "/assets/nested/app-image-C6CAD725.jpg",
       },
     });
   });
@@ -85,7 +91,9 @@ describe("hanami-assets", () => {
     const sliceEntryPoint = path.join(dest, "slices/admin/assets/js/app.js");
     await fs.writeFile(sliceEntryPoint, "console.log('Hello, Admin!');");
     const sliceImage = path.join(dest, "slices/admin/assets/images/nested/slice-image.jpg");
-    await fs.writeFile(sliceImage, "");
+    await fs.writeFile(sliceImage, "slice-image");
+    const sliceFont = path.join(dest, "slices/admin/assets/fonts/slice-font.otf");
+    await fs.writeFile(sliceFont, "slice-font");
 
     // Compile assets
     await assets.run({ root: dest, argv: ["--path=slices/admin", "--target=public/assets/admin"] });
@@ -108,7 +116,10 @@ describe("hanami-assets", () => {
         url: "/assets/admin/app-ITGLRDE7.js",
       },
       "nested/slice-image.jpg": {
-        url: "/assets/admin/nested/slice-image-E3B0C442.jpg",
+        url: "/assets/admin/nested/slice-image-4951F7C9.jpg",
+      },
+      "slice-font.otf": {
+        url: "/assets/admin/slice-font-826F93B7.otf",
       },
     });
   });
