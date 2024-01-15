@@ -13,10 +13,7 @@ export interface PluginOptions {
   hash: boolean;
 }
 
-export const defaults: Pick<
-  PluginOptions,
-  "root" | "sriAlgorithms" | "hash"
-> = {
+export const defaults: Pick<PluginOptions, "root" | "sriAlgorithms" | "hash"> = {
   root: "",
   sriAlgorithms: [],
   hash: true,
@@ -90,7 +87,9 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         // {
         //   'public/assets/admin/app-ITGLRDE7.js': 'slices/admin/assets/js/app.js'
         // }
-        function extractEsbuildCompiledEntrypoints(esbuildOutputs: Record<string, any>): Record<string, string> {
+        function extractEsbuildCompiledEntrypoints(
+          esbuildOutputs: Record<string, any>,
+        ): Record<string, string> {
           const entryPoints: Record<string, string> = {};
 
           for (const key in esbuildOutputs) {
@@ -196,7 +195,10 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
             asset.sri = [];
 
             for (const algorithm of options.sriAlgorithms) {
-              const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, path.join(options.root, assetPath));
+              const subresourceIntegrity = calculateSubresourceIntegrity(
+                algorithm,
+                path.join(options.root, assetPath),
+              );
               asset.sri.push(subresourceIntegrity);
             }
           }
@@ -207,7 +209,10 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         // Process entrypoints
         for (const compiledEntryPoint in compiledEntryPoints) {
           const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
-          const sourceUrl = compiledEntryPoints[compiledEntryPoint].replace(`${options.baseDir}/assets/js/`, "")
+          const sourceUrl = compiledEntryPoints[compiledEntryPoint].replace(
+            `${options.baseDir}/assets/js/`,
+            "",
+          );
 
           assetsManifest[sourceUrl] = prepareAsset(compiledEntryPoint, destinationUrl);
         }
@@ -222,7 +227,10 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           const destinationUrl = calulateDestinationUrl(copiedAsset[1]);
 
           // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
-          var sourceUrl = copiedAsset[0].replace(path.join(options.root, options.baseDir, "assets") + "/", "")
+          var sourceUrl = copiedAsset[0].replace(
+            path.join(options.root, options.baseDir, "assets") + "/",
+            "",
+          );
           // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
           sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
 
