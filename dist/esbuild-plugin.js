@@ -55,14 +55,13 @@ const hanamiEsbuild = (options) => {
                 //  To this:
                 //
                 // {
-                //   'public/assets/admin/app-ITGLRDE7.js': 'slices/admin/assets/js/app.js'
+                //   'public/assets/admin/app-ITGLRDE7.js': true
                 // }
                 function extractEsbuildCompiledEntrypoints(esbuildOutputs) {
                     const entryPoints = {};
                     for (const key in esbuildOutputs) {
-                        const output = esbuildOutputs[key];
-                        if (output.entryPoint) {
-                            entryPoints[key] = output.entryPoint;
+                        if (!key.endsWith(".map")) {
+                            entryPoints[key] = true;
                         }
                     }
                     return entryPoints;

@@ -83,18 +83,16 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         //  To this:
         //
         // {
-        //   'public/assets/admin/app-ITGLRDE7.js': 'slices/admin/assets/js/app.js'
+        //   'public/assets/admin/app-ITGLRDE7.js': true
         // }
         function extractEsbuildCompiledEntrypoints(
           esbuildOutputs: Record<string, any>,
-        ): Record<string, string> {
-          const entryPoints: Record<string, string> = {};
+        ): Record<string, boolean> {
+          const entryPoints: Record<string, boolean> = {};
 
           for (const key in esbuildOutputs) {
-            const output = esbuildOutputs[key];
-
-            if (output.entryPoint) {
-              entryPoints[key] = output.entryPoint;
+            if (!key.endsWith(".map")) {
+              entryPoints[key] = true;
             }
           }
 
@@ -124,7 +122,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         const processAssetDirectory = (
           pattern: string,
-          compiledEntryPoints: Record<string, string>,
+          compiledEntryPoints: Record<string, boolean>,
           options: PluginOptions,
         ): string[][] => {
           const dirPath = path.dirname(pattern);

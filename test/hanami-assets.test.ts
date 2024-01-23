@@ -11,6 +11,7 @@ const watchTimeout = 60000; // ms (60 seconds)
 // Helper function to create a test environment
 async function createTestEnvironment() {
   // Create temporary directories
+  await fs.ensureDir(path.join(dest, "app/assets/css"));
   await fs.ensureDir(path.join(dest, "app/assets/js"));
   await fs.ensureDir(path.join(dest, "app/assets/js/nested"));
   await fs.ensureDir(path.join(dest, "app/assets/images/nested"));
@@ -159,6 +160,35 @@ describe("hanami-assets", () => {
       },
     });
   });
+
+  test("handles CSS", async () => {
+    const entryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(entryPoint, 'import "../css/app.css";');
+    const cssFile = path.join(dest, "app/assets/css/app.css");
+    await fs.writeFile(cssFile, ".btn { background: #f00; }");
+
+    await assets.run({ root: dest, argv: ["--path=app", "--target=public/assets"] });
+
+    const entryPointExists = await fs.pathExists(path.join("public/assets/app-6PW7FGD5.js"));
+    expect(entryPointExists).toBe(true);
+    const cssExists = await fs.pathExists(path.join("public/assets/app-HYVEQYF6.css"));
+    expect(cssExists).toBe(true);
+
+    const manifestContent = await fs.readFile(
+      path.join(dest, "public/assets/assets.json"),
+      "utf-8",
+    );
+    const manifest = JSON.parse(manifestContent);
+
+    expect(manifest).toEqual({
+      "app.css": {
+        url: "/assets/app-HYVEQYF6.css",
+      },
+      "app.js": {
+        url: "/assets/app-6PW7FGD5.js",
+      },
+    });
+  })
 
   test("handles TypeScript", async () => {
     const entryPoint1 = path.join(dest, "app/assets/js/app.ts");
