@@ -12,6 +12,7 @@ const watchTimeout = 60000; // ms (60 seconds)
 async function createTestEnvironment() {
   // Create temporary directories
   await fs.ensureDir(path.join(dest, "app/assets/js"));
+  await fs.ensureDir(path.join(dest, "app/assets/js/nested"));
   await fs.ensureDir(path.join(dest, "app/assets/images/nested"));
   await fs.ensureDir(path.join(dest, "app/assets/fonts"));
   await fs.ensureDir(path.join(dest, "slices/admin/assets/js"));
@@ -158,6 +159,41 @@ describe("hanami-assets", () => {
       },
     });
   });
+
+  test("handles TypeScript", async () => {
+    const entryPoint1 = path.join(dest, "app/assets/js/app.ts");
+    await fs.writeFile(entryPoint1, "console.log('Hello from TS!');");
+    const entryPoint2 = path.join(dest, "app/assets/js/nested/app.tsx");
+    await fs.writeFile(entryPoint2, "console.log('Hello from TSX!');");
+
+    // Compile assets
+    await assets.run({ root: dest, argv: ["--path=app", "--target=public/assets"] });
+
+    const asset1Exists = await fs.pathExists(path.join("public/assets/app-2TLUHCQ6.js"));
+    expect(asset1Exists).toBe(true);
+    const asset2Exists = await fs.pathExists(path.join("public/assets/nested/app-5VHYTKP2.js"));
+    expect(asset2Exists).toBe(true);
+
+    const manifestExists = await fs.pathExists(path.join(dest, "public/assets/assets.json"));
+    expect(manifestExists).toBe(true);
+
+    // Read and parse the manifest file
+    const manifestContent = await fs.readFile(
+      path.join(dest, "public/assets/assets.json"),
+      "utf-8",
+    );
+    const manifest = JSON.parse(manifestContent);
+
+    // Check if the manifest contains the correct file paths
+    expect(manifest).toEqual({
+      "app.js": {
+        url: "/assets/app-2TLUHCQ6.js",
+      },
+      "nested/app.js": {
+        url: "/assets/nested/app-5VHYTKP2.js",
+      },
+    });
+  })
 
   test(
     "watch",

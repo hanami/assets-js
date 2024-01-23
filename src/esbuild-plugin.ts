@@ -198,11 +198,12 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         // Process entrypoints
         for (const compiledEntryPoint in compiledEntryPoints) {
+          // Convert "public/assets/app-2TLUHCQ6.js" to "app.js"
+          let sourceUrl = compiledEntryPoint
+            .replace(options.destDir + "/", "")
+            .replace(/(-[A-Z0-9]{8})(\.\S+)$/, "$2")
+
           const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
-          const sourceUrl = compiledEntryPoints[compiledEntryPoint].replace(
-            `${options.baseDir}/assets/js/`,
-            "",
-          );
 
           assetsManifest[sourceUrl] = prepareAsset(compiledEntryPoint, destinationUrl);
         }
