@@ -75,7 +75,7 @@ export const buildOptions = (root, args) => {
         absWorkingDir: root,
         loader: loader,
         external: externalDirectories(),
-        logLevel: "silent",
+        logLevel: "info",
         minify: true,
         sourcemap: true,
         entryNames: "[dir]/[name]-[hash]",
