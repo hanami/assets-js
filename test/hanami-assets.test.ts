@@ -188,7 +188,7 @@ describe("hanami-assets", () => {
         url: "/assets/app-6PW7FGD5.js",
       },
     });
-  })
+  });
 
   test("handles TypeScript", async () => {
     const entryPoint1 = path.join(dest, "app/assets/js/app.ts");
@@ -223,7 +223,7 @@ describe("hanami-assets", () => {
         url: "/assets/nested/app-5VHYTKP2.js",
       },
     });
-  })
+  });
 
   test(
     "watch",

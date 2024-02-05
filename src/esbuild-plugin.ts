@@ -199,7 +199,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           // Convert "public/assets/app-2TLUHCQ6.js" to "app.js"
           let sourceUrl = compiledEntryPoint
             .replace(options.destDir + "/", "")
-            .replace(/(-[A-Z0-9]{8})(\.\S+)$/, "$2")
+            .replace(/(-[A-Z0-9]{8})(\.\S+)$/, "$2");
 
           const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
 
