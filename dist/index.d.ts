@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { BuildContext } from "esbuild";
 import { Args } from "./args.js";
 import { EsbuildOptions } from "./esbuild.js";
