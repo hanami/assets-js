@@ -54,7 +54,7 @@ describe("hanami-assets", () => {
     await fs.writeFile(sliceImage, "");
 
     // Compile assets
-    await assets.run({ root: dest, argv: ["--path=app", "--target=public/assets"] });
+    await assets.run({ root: dest, argv: ["--path=app", "--dest=public/assets"] });
 
     // FIXME: this path should take into account the file hashing in the file name
     const appAsset = globSync(path.join("public/assets/app-*.js"))[0];
@@ -100,7 +100,7 @@ describe("hanami-assets", () => {
     await fs.writeFile(sliceFont, "slice-font");
 
     // Compile assets
-    await assets.run({ root: dest, argv: ["--path=slices/admin", "--target=public/assets/admin"] });
+    await assets.run({ root: dest, argv: ["--path=slices/admin", "--dest=public/assets/admin"] });
 
     // FIXME: this path should take into account the file hashing in the file name
     const sliceAsset = globSync(path.join("public/assets/admin/app-*.js"))[0];
@@ -138,7 +138,7 @@ describe("hanami-assets", () => {
     // Compile assets
     await assets.run({
       root: dest,
-      argv: ["--path=app", "--target=public/assets", "--sri=sha256,sha384,sha512"],
+      argv: ["--path=app", "--dest=public/assets", "--sri=sha256,sha384,sha512"],
     });
 
     // Read and parse the manifest file
@@ -167,7 +167,7 @@ describe("hanami-assets", () => {
     const cssFile = path.join(dest, "app/assets/css/app.css");
     await fs.writeFile(cssFile, ".btn { background: #f00; }");
 
-    await assets.run({ root: dest, argv: ["--path=app", "--target=public/assets"] });
+    await assets.run({ root: dest, argv: ["--path=app", "--dest=public/assets"] });
 
     const entryPointExists = await fs.pathExists(path.join("public/assets/app-6PW7FGD5.js"));
     expect(entryPointExists).toBe(true);
@@ -197,7 +197,7 @@ describe("hanami-assets", () => {
     await fs.writeFile(entryPoint2, "console.log('Hello from TSX!');");
 
     // Compile assets
-    await assets.run({ root: dest, argv: ["--path=app", "--target=public/assets"] });
+    await assets.run({ root: dest, argv: ["--path=app", "--dest=public/assets"] });
 
     const asset1Exists = await fs.pathExists(path.join("public/assets/app-2TLUHCQ6.js"));
     expect(asset1Exists).toBe(true);
@@ -244,7 +244,7 @@ describe("hanami-assets", () => {
       // Watch for asset changes
       let ctx = await assets.run({
         root: dest,
-        argv: ["--path=app", "--target=public/assets", "--watch"],
+        argv: ["--path=app", "--dest=public/assets", "--watch"],
       });
 
       await fs.writeFile(entryPoint, "console.log('Hello, Watch!');");

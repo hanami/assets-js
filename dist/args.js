@@ -6,7 +6,7 @@ export const parseArgs = (args) => {
     });
     return {
         path: result["path"],
-        target: result["target"],
+        dest: result["dest"],
         watch: result.hasOwnProperty("watch"),
         sri: result["sri"]?.split(","),
     };

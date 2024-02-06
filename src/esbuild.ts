@@ -73,14 +73,14 @@ export const buildOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: PluginOptions = {
     ...pluginDefaults,
     baseDir: args.path,
-    destDir: args.target,
+    destDir: args.dest,
     sriAlgorithms: args.sri || [],
   };
   const plugin = esbuildPlugin(pluginOptions);
 
   const options: EsbuildOptions = {
     bundle: true,
-    outdir: args.target,
+    outdir: args.dest,
     absWorkingDir: root,
     loader: loader,
     external: findExternalDirectories(path.join(root, args.path)),
@@ -99,14 +99,14 @@ export const watchOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: PluginOptions = {
     ...pluginDefaults,
     baseDir: args.path,
-    destDir: args.target,
+    destDir: args.dest,
     hash: false,
   };
   const plugin = esbuildPlugin(pluginOptions);
 
   const options: EsbuildOptions = {
     bundle: true,
-    outdir: args.target,
+    outdir: args.dest,
     absWorkingDir: root,
     loader: loader,
     external: findExternalDirectories(path.join(root, args.path)),
