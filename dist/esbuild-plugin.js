@@ -86,26 +86,28 @@ const hanamiEsbuild = (options) => {
                     const files = fs.readdirSync(dirPath, { recursive: true });
                     const assets = [];
                     files.forEach((file) => {
-                        const srcPath = path.join(dirPath, file.toString());
+                        const sourcePath = path.join(dirPath, file.toString());
                         // Skip if the file is already processed by esbuild
-                        if (compiledEntryPoints.hasOwnProperty(srcPath)) {
+                        if (compiledEntryPoints.hasOwnProperty(sourcePath)) {
                             return;
                         }
                         // Skip directories and any other non-files
-                        if (!fs.statSync(srcPath).isFile()) {
+                        if (!fs.statSync(sourcePath).isFile()) {
                             return;
                         }
-                        const fileHash = calculateHash(fs.readFileSync(srcPath), options.hash);
-                        const fileExtension = path.extname(srcPath);
-                        const baseName = path.basename(srcPath, fileExtension);
+                        const fileHash = calculateHash(fs.readFileSync(sourcePath), options.hash);
+                        const fileExtension = path.extname(sourcePath);
+                        const baseName = path.basename(sourcePath, fileExtension);
                         const destFileName = [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
-                        const destPath = path.join(options.destDir, path.relative(dirPath, srcPath).replace(path.basename(file.toString()), destFileName));
-                        if (fs.lstatSync(srcPath).isDirectory()) {
+                        const destPath = path.join(options.destDir, path
+                            .relative(dirPath, sourcePath)
+                            .replace(path.basename(file.toString()), destFileName));
+                        if (fs.lstatSync(sourcePath).isDirectory()) {
                             assets.push(...processAssetDirectory(destPath, compiledEntryPoints, options));
                         }
                         else {
-                            copyAsset(srcPath, destPath);
-                            assets.push([srcPath, destPath]);
+                            copyAsset(sourcePath, destPath);
+                            assets.push({ sourcePath: sourcePath, destPath: destPath });
                         }
                     });
                     return assets;
@@ -114,7 +116,6 @@ const hanamiEsbuild = (options) => {
                     return;
                 }
                 const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
-                // TODO: use a more explicit type than this. an array of records with named properties?
                 const copiedAssets = [];
                 externalDirs.forEach((pattern) => {
                     copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
@@ -143,15 +144,15 @@ const hanamiEsbuild = (options) => {
                 // Process copied assets
                 for (const copiedAsset of copiedAssets) {
                     // TODO: I wonder if we can skip .map files earlier
-                    if (copiedAsset[0].endsWith(".map")) {
+                    if (copiedAsset.sourcePath.endsWith(".map")) {
                         continue;
                     }
-                    const destinationUrl = calulateDestinationUrl(copiedAsset[1]);
+                    const destinationUrl = calulateDestinationUrl(copiedAsset.destPath);
                     // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
-                    var sourceUrl = copiedAsset[0].replace(path.join(options.root, options.sourceDir, assetsDirName) + "/", "");
+                    var sourceUrl = copiedAsset.sourcePath.replace(path.join(options.root, options.sourceDir, assetsDirName) + "/", "");
                     // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
                     sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
-                    assetsManifest[sourceUrl] = prepareAsset(copiedAsset[1], destinationUrl);
+                    assetsManifest[sourceUrl] = prepareAsset(copiedAsset.destPath, destinationUrl);
                 }
                 // Write assets manifest to the destination directory
                 await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
