@@ -13,8 +13,7 @@ export interface PluginOptions {
   hash: boolean;
 }
 
-export const defaults: Pick<PluginOptions, "root" | "sriAlgorithms" | "hash"> = {
-  root: "",
+export const defaults: Pick<PluginOptions, "sriAlgorithms" | "hash"> = {
   sriAlgorithms: [],
   hash: true,
 };
@@ -30,7 +29,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
     setup(build: PluginBuild) {
       build.initialOptions.metafile = true;
-      options.root = options.root || process.cwd(); // TODO: can't this always be passed in?
 
       const manifestPath = path.join(options.root, options.destDir, "assets.json");
       const externalDirs = build.initialOptions.external || [];

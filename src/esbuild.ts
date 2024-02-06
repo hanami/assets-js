@@ -72,6 +72,7 @@ const findExternalDirectories = (basePath: string): string[] => {
 export const buildOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: PluginOptions = {
     ...pluginDefaults,
+    root: root,
     baseDir: args.path,
     destDir: args.dest,
     sriAlgorithms: args.sri || [],
@@ -98,6 +99,7 @@ export const buildOptions = (root: string, args: Args): EsbuildOptions => {
 export const watchOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: PluginOptions = {
     ...pluginDefaults,
+    root: root,
     baseDir: args.path,
     destDir: args.dest,
     hash: false,

@@ -3,7 +3,6 @@ import path from "path";
 import crypto from "node:crypto";
 const URL_SEPARATOR = "/";
 export const defaults = {
-    root: "",
     sriAlgorithms: [],
     hash: true,
 };
@@ -12,7 +11,6 @@ const hanamiEsbuild = (options) => {
         name: "hanami-esbuild",
         setup(build) {
             build.initialOptions.metafile = true;
-            options.root = options.root || process.cwd(); // TODO: can't this always be passed in?
             const manifestPath = path.join(options.root, options.destDir, "assets.json");
             const externalDirs = build.initialOptions.external || [];
             build.onEnd(async (result) => {
