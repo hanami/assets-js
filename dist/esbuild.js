@@ -56,7 +56,7 @@ export const buildOptions = (root, args) => {
     const pluginOptions = {
         ...pluginDefaults,
         root: root,
-        baseDir: args.path,
+        sourceDir: args.path,
         destDir: args.dest,
         sriAlgorithms: args.sri || [],
     };
@@ -80,7 +80,7 @@ export const watchOptions = (root, args) => {
     const pluginOptions = {
         ...pluginDefaults,
         root: root,
-        baseDir: args.path,
+        sourceDir: args.path,
         destDir: args.dest,
         hash: false,
     };

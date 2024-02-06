@@ -73,7 +73,7 @@ export const buildOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: PluginOptions = {
     ...pluginDefaults,
     root: root,
-    baseDir: args.path,
+    sourceDir: args.path,
     destDir: args.dest,
     sriAlgorithms: args.sri || [],
   };
@@ -100,7 +100,7 @@ export const watchOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: PluginOptions = {
     ...pluginDefaults,
     root: root,
-    baseDir: args.path,
+    sourceDir: args.path,
     destDir: args.dest,
     hash: false,
   };

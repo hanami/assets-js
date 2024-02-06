@@ -7,7 +7,7 @@ const URL_SEPARATOR = "/";
 
 export interface PluginOptions {
   root: string;
-  baseDir: string;
+  sourceDir: string;
   destDir: string;
   sriAlgorithms: Array<string>;
   hash: boolean;
@@ -215,7 +215,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
           // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
           var sourceUrl = copiedAsset[0].replace(
-            path.join(options.root, options.baseDir, "assets") + "/",
+            path.join(options.root, options.sourceDir, "assets") + "/",
             "",
           );
           // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths

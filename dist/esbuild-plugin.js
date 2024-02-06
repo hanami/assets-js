@@ -147,7 +147,7 @@ const hanamiEsbuild = (options) => {
                     }
                     const destinationUrl = calulateDestinationUrl(copiedAsset[1]);
                     // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
-                    var sourceUrl = copiedAsset[0].replace(path.join(options.root, options.baseDir, "assets") + "/", "");
+                    var sourceUrl = copiedAsset[0].replace(path.join(options.root, options.sourceDir, "assets") + "/", "");
                     // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
                     sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
                     assetsManifest[sourceUrl] = prepareAsset(copiedAsset[1], destinationUrl);
