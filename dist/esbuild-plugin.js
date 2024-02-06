@@ -113,7 +113,6 @@ const hanamiEsbuild = (options) => {
                 if (typeof outputs === "undefined") {
                     return;
                 }
-                // TODO: change name of `inputs` to something clearer...
                 const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
                 // TODO: use a more explicit type than this. an array of records with named properties?
                 const copiedAssets = [];
