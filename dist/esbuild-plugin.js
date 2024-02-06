@@ -131,11 +131,12 @@ const hanamiEsbuild = (options) => {
                     return asset;
                 }
                 // Process entrypoints
+                const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
                 for (const compiledEntryPoint in compiledEntryPoints) {
                     // Convert "public/assets/app-2TLUHCQ6.js" to "app.js"
                     let sourceUrl = compiledEntryPoint
                         .replace(options.destDir + "/", "")
-                        .replace(/(-[A-Z0-9]{8})(\.\S+)$/, "$2");
+                        .replace(fileHashRegexp, "$2");
                     const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
                     assetsManifest[sourceUrl] = prepareAsset(compiledEntryPoint, destinationUrl);
                 }
