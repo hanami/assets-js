@@ -7,21 +7,13 @@ const URL_SEPARATOR = "/";
 
 export interface PluginOptions {
   root: string;
-  publicDir: string;
+  sourceDir: string;
   destDir: string;
-  manifestPath: string;
   sriAlgorithms: Array<string>;
   hash: boolean;
 }
 
-export const defaults: Pick<
-  PluginOptions,
-  "root" | "publicDir" | "destDir" | "manifestPath" | "sriAlgorithms" | "hash"
-> = {
-  root: "",
-  publicDir: "public",
-  destDir: path.join("public", "assets"),
-  manifestPath: path.join("public", "assets.json"),
+export const defaults: Pick<PluginOptions, "sriAlgorithms" | "hash"> = {
   sriAlgorithms: [],
   hash: true,
 };
@@ -31,26 +23,26 @@ interface Asset {
   sri?: Array<string>;
 }
 
-const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
+interface CopiedAsset {
+  sourcePath: string;
+  destPath: string;
+}
+
+const assetsDirName = "assets";
+
+const hanamiEsbuild = (options: PluginOptions): Plugin => {
   return {
     name: "hanami-esbuild",
 
     setup(build: PluginBuild) {
       build.initialOptions.metafile = true;
-      options.root = options.root || process.cwd();
 
-      const manifest = path.join(options.root, options.manifestPath);
+      const manifestPath = path.join(options.root, options.destDir, "assets.json");
       const externalDirs = build.initialOptions.external || [];
 
       build.onEnd(async (result: BuildResult) => {
         const outputs = result.metafile?.outputs;
         const assetsManifest: Record<string, Asset> = {};
-
-        const calulateSourceUrl = (str: string): string => {
-          return normalizeUrl(str)
-            .replace(/\/assets\//, "")
-            .replace(/-[A-Z0-9]{8}/, "");
-        };
 
         const calulateDestinationUrl = (str: string): string => {
           return normalizeUrl(str).replace(/public/, "");
@@ -78,20 +70,38 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
           return result.slice(0, 8).toUpperCase();
         };
 
-        function extractEsbuildInputs(inputData: Record<string, any>): Record<string, boolean> {
-          const inputs: Record<string, boolean> = {};
+        // Transforms the esbuild metafile outputs into an object containing mappings of outputs
+        // generated from entryPoints only.
+        //
+        // Converts this:
+        //
+        // {
+        //   'public/assets/admin/app-ITGLRDE7.js': {
+        //     imports: [],
+        //     exports: [],
+        //     entryPoint: 'slices/admin/assets/js/app.js',
+        //     inputs: { 'slices/admin/assets/js/app.js': [Object] },
+        //     bytes: 95
+        //   }
+        // }
+        //
+        //  To this:
+        //
+        // {
+        //   'public/assets/admin/app-ITGLRDE7.js': true
+        // }
+        function extractEsbuildCompiledEntrypoints(
+          esbuildOutputs: Record<string, any>,
+        ): Record<string, boolean> {
+          const entryPoints: Record<string, boolean> = {};
 
-          for (const key in inputData) {
-            const entry = inputData[key];
-
-            if (entry.inputs) {
-              for (const inputKey in entry.inputs) {
-                inputs[inputKey] = true;
-              }
+          for (const key in esbuildOutputs) {
+            if (!key.endsWith(".map")) {
+              entryPoints[key] = true;
             }
           }
 
-          return inputs;
+          return entryPoints;
         }
 
         // TODO: profile the current implementation vs blindly copying the asset
@@ -117,41 +127,43 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
 
         const processAssetDirectory = (
           pattern: string,
-          inputs: Record<string, boolean>,
+          compiledEntryPoints: Record<string, boolean>,
           options: PluginOptions,
-        ): string[] => {
+        ): CopiedAsset[] => {
           const dirPath = path.dirname(pattern);
           const files = fs.readdirSync(dirPath, { recursive: true });
-          const assets: string[] = [];
+          const assets: CopiedAsset[] = [];
 
           files.forEach((file) => {
-            const srcPath = path.join(dirPath, file.toString());
+            const sourcePath = path.join(dirPath, file.toString());
 
             // Skip if the file is already processed by esbuild
-            if (inputs.hasOwnProperty(srcPath)) {
+            if (compiledEntryPoints.hasOwnProperty(sourcePath)) {
               return;
             }
 
             // Skip directories and any other non-files
-            if (!fs.statSync(srcPath).isFile()) {
+            if (!fs.statSync(sourcePath).isFile()) {
               return;
             }
 
-            const fileHash = calculateHash(fs.readFileSync(srcPath), options.hash);
-            const fileExtension = path.extname(srcPath);
-            const baseName = path.basename(srcPath, fileExtension);
+            const fileHash = calculateHash(fs.readFileSync(sourcePath), options.hash);
+            const fileExtension = path.extname(sourcePath);
+            const baseName = path.basename(sourcePath, fileExtension);
             const destFileName =
               [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
             const destPath = path.join(
               options.destDir,
-              path.relative(dirPath, srcPath).replace(path.basename(file.toString()), destFileName),
+              path
+                .relative(dirPath, sourcePath)
+                .replace(path.basename(file.toString()), destFileName),
             );
 
-            if (fs.lstatSync(srcPath).isDirectory()) {
-              assets.push(...processAssetDirectory(destPath, inputs, options));
+            if (fs.lstatSync(sourcePath).isDirectory()) {
+              assets.push(...processAssetDirectory(destPath, compiledEntryPoints, options));
             } else {
-              copyAsset(srcPath, destPath);
-              assets.push(destPath);
+              copyAsset(sourcePath, destPath);
+              assets.push({ sourcePath: sourcePath, destPath: destPath });
             }
           });
 
@@ -162,38 +174,66 @@ const hanamiEsbuild = (options: PluginOptions = { ...defaults }): Plugin => {
           return;
         }
 
-        const inputs = extractEsbuildInputs(outputs);
-        const copiedAssets: string[] = [];
+        const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
+
+        const copiedAssets: CopiedAsset[] = [];
         externalDirs.forEach((pattern) => {
-          copiedAssets.push(...processAssetDirectory(pattern, inputs, options));
+          copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
         });
 
-        const assetsToProcess = Object.keys(outputs).concat(copiedAssets);
-
-        for (const assetToProcess of assetsToProcess) {
-          if (assetToProcess.endsWith(".map")) {
-            continue;
-          }
-
-          const destinationUrl = calulateDestinationUrl(assetToProcess);
-          const sourceUrl = calulateSourceUrl(destinationUrl);
-
+        function prepareAsset(assetPath: string, destinationUrl: string): Asset {
           var asset: Asset = { url: destinationUrl };
 
           if (options.sriAlgorithms.length > 0) {
             asset.sri = [];
 
             for (const algorithm of options.sriAlgorithms) {
-              const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, assetToProcess);
+              const subresourceIntegrity = calculateSubresourceIntegrity(
+                algorithm,
+                path.join(options.root, assetPath),
+              );
               asset.sri.push(subresourceIntegrity);
             }
           }
 
-          assetsManifest[sourceUrl] = asset;
+          return asset;
+        }
+
+        // Process entrypoints
+        const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
+        for (const compiledEntryPoint in compiledEntryPoints) {
+          // Convert "public/assets/app-2TLUHCQ6.js" to "app.js"
+          let sourceUrl = compiledEntryPoint
+            .replace(options.destDir + "/", "")
+            .replace(fileHashRegexp, "$2");
+
+          const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
+
+          assetsManifest[sourceUrl] = prepareAsset(compiledEntryPoint, destinationUrl);
+        }
+
+        // Process copied assets
+        for (const copiedAsset of copiedAssets) {
+          // TODO: I wonder if we can skip .map files earlier
+          if (copiedAsset.sourcePath.endsWith(".map")) {
+            continue;
+          }
+
+          const destinationUrl = calulateDestinationUrl(copiedAsset.destPath);
+
+          // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
+          var sourceUrl = copiedAsset.sourcePath.replace(
+            path.join(options.root, options.sourceDir, assetsDirName) + "/",
+            "",
+          );
+          // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
+          sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
+
+          assetsManifest[sourceUrl] = prepareAsset(copiedAsset.destPath, destinationUrl);
         }
 
         // Write assets manifest to the destination directory
-        await fs.writeJson(manifest, assetsManifest, { spaces: 2 });
+        await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
       });
     },
   };

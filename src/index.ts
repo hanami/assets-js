@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import fs from "fs-extra";
 import path from "path";
 import esbuild, { BuildContext } from "esbuild";
@@ -15,6 +13,7 @@ interface RunOptions {
 type EsbuildOptionsFn = (args: Args, esbuildOptions: EsbuildOptions) => EsbuildOptions;
 
 export const run = async function (options?: RunOptions): Promise<BuildContext | void> {
+  // TODO: Allow root to be provided (optionally) as a --root arg
   const { root = process.cwd(), argv = process.argv, esbuildOptionsFn = null } = options || {};
 
   const args = parseArgs(argv);

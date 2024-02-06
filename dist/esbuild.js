@@ -18,36 +18,28 @@ const loader = {
     ".eot": "file",
     ".ttf": "file",
 };
+const assetsDirName = "assets";
 const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
-// FIXME: make cross platform
-const entryPointsMatcher = /(app\/assets\/js\/|slices\/(.*\/)assets\/js\/)/;
-const findEntryPoints = (root) => {
+const findEntryPoints = (sliceRoot) => {
     const result = {};
-    // TODO: should this be done explicitly within the root?
     const entryPoints = globSync([
-        path.join("app", "assets", "js", "**", entryPointExtensions),
-        path.join("slices", "*", "assets", "js", "**", entryPointExtensions),
+        path.join(sliceRoot, assetsDirName, "js", "**", entryPointExtensions),
     ]);
     entryPoints.forEach((entryPoint) => {
-        let modifiedPath = entryPoint.replace(entryPointsMatcher, "$2");
-        const relativePath = path.relative(root, modifiedPath);
-        const { dir, name } = path.parse(relativePath);
+        let entryPointPath = entryPoint.replace(sliceRoot + "/assets/js/", "");
+        const { dir, name } = path.parse(entryPointPath);
         if (dir) {
-            modifiedPath = path.join(dir, name);
+            entryPointPath = path.join(dir, name);
         }
         else {
-            modifiedPath = name;
+            entryPointPath = name;
         }
-        result[modifiedPath] = entryPoint;
+        result[entryPointPath] = entryPoint;
     });
     return result;
 };
-// TODO: feels like this really should be passed a root too, to become the cwd for globSync
-const externalDirectories = () => {
-    const assetDirsPattern = [
-        path.join("app", "assets", "*"),
-        path.join("slices", "*", "assets", "*"),
-    ];
+const findExternalDirectories = (basePath) => {
+    const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
     const excludeDirs = ["js", "css"];
     try {
         const dirs = globSync(assetDirsPattern, { nodir: false });
@@ -66,20 +58,23 @@ const externalDirectories = () => {
 export const buildOptions = (root, args) => {
     const pluginOptions = {
         ...pluginDefaults,
+        root: root,
+        sourceDir: args.path,
+        destDir: args.dest,
         sriAlgorithms: args.sri || [],
     };
     const plugin = esbuildPlugin(pluginOptions);
     const options = {
         bundle: true,
-        outdir: path.join(root, "public", "assets"),
+        outdir: args.dest,
         absWorkingDir: root,
         loader: loader,
-        external: externalDirectories(),
+        external: findExternalDirectories(path.join(root, args.path)),
         logLevel: "info",
         minify: true,
         sourcemap: true,
         entryNames: "[dir]/[name]-[hash]",
-        entryPoints: findEntryPoints(root),
+        entryPoints: findEntryPoints(path.join(root, args.path)),
         plugins: [plugin],
     };
     return options;
@@ -87,20 +82,23 @@ export const buildOptions = (root, args) => {
 export const watchOptions = (root, args) => {
     const pluginOptions = {
         ...pluginDefaults,
+        root: root,
+        sourceDir: args.path,
+        destDir: args.dest,
         hash: false,
     };
     const plugin = esbuildPlugin(pluginOptions);
     const options = {
         bundle: true,
-        outdir: path.join(root, "public", "assets"),
+        outdir: args.dest,
         absWorkingDir: root,
         loader: loader,
-        external: externalDirectories(),
+        external: findExternalDirectories(path.join(root, args.path)),
         logLevel: "info",
         minify: false,
         sourcemap: false,
         entryNames: "[dir]/[name]",
-        entryPoints: findEntryPoints(root),
+        entryPoints: findEntryPoints(path.join(root, args.path)),
         plugins: [plugin],
     };
     return options;

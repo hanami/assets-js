@@ -1,4 +1,6 @@
 export interface Args {
+    path: string;
+    dest: string;
     watch: Boolean;
     sri: string[] | null;
 }

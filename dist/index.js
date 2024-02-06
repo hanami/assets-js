@@ -1,10 +1,10 @@
-#!/usr/bin/env node
 import fs from "fs-extra";
 import path from "path";
 import esbuild from "esbuild";
 import { parseArgs } from "./args.js";
 import { buildOptions, watchOptions } from "./esbuild.js";
 export const run = async function (options) {
+    // TODO: Allow root to be provided (optionally) as a --root arg
     const { root = process.cwd(), argv = process.argv, esbuildOptionsFn = null } = options || {};
     const args = parseArgs(argv);
     // TODO: make nicer

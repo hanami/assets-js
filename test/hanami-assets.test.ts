@@ -11,10 +11,14 @@ const watchTimeout = 60000; // ms (60 seconds)
 // Helper function to create a test environment
 async function createTestEnvironment() {
   // Create temporary directories
+  await fs.ensureDir(path.join(dest, "app/assets/css"));
   await fs.ensureDir(path.join(dest, "app/assets/js"));
-  await fs.ensureDir(path.join(dest, "app/assets/images"));
+  await fs.ensureDir(path.join(dest, "app/assets/js/nested"));
+  await fs.ensureDir(path.join(dest, "app/assets/images/nested"));
+  await fs.ensureDir(path.join(dest, "app/assets/fonts"));
   await fs.ensureDir(path.join(dest, "slices/admin/assets/js"));
-  await fs.ensureDir(path.join(dest, "slices/metrics/assets/js"));
+  await fs.ensureDir(path.join(dest, "slices/admin/assets/images/nested"));
+  await fs.ensureDir(path.join(dest, "slices/admin/assets/fonts"));
   await fs.ensureDir(path.join(dest, "public"));
 
   process.chdir(dest);
@@ -35,62 +39,113 @@ describe("hanami-assets", () => {
     await cleanTestEnvironment();
   });
 
-  test("copies assets from app/assets to public/assets and generates a manifest file", async () => {
-    const entryPoint1 = path.join(dest, "app/assets/js/app.js");
-    const entryPoint2 = path.join(dest, "slices/admin/assets/js/app.js");
-    const entryPoint3 = path.join(dest, "slices/metrics/assets/js/app.ts");
-    await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
-    await fs.writeFile(entryPoint2, "console.log('Hello, Admin!');");
-    await fs.writeFile(entryPoint3, "console.log('Hello, Metrics!');");
+  test("copies assets from the app to public/assets and generates a manifest file", async () => {
+    // Prepare both app and assets slices to make it clear the slice assets are _not_ compiled here
+    const appEntryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(appEntryPoint, "console.log('Hello, World!');");
+    const appImage = path.join(dest, "app/assets/images/nested/app-image.jpg");
+    await fs.writeFile(appImage, "app-image");
+    const appFont = path.join(dest, "app/assets/fonts/app-font.otf");
+    await fs.writeFile(appFont, "app-font");
+
+    const sliceEntryPoint = path.join(dest, "slices/admin/assets/js/app.js");
+    await fs.writeFile(sliceEntryPoint, "console.log('Hello, Admin!');");
+    const sliceImage = path.join(dest, "slices/admin/assets/images/nested/slice-image.jpg");
+    await fs.writeFile(sliceImage, "");
 
     // Compile assets
-    await assets.run({ root: dest });
+    await assets.run({ root: dest, argv: ["--path=app", "--dest=public/assets"] });
 
     // FIXME: this path should take into account the file hashing in the file name
     const appAsset = globSync(path.join("public/assets/app-*.js"))[0];
     const appAssetExists = await fs.pathExists(appAsset);
     expect(appAssetExists).toBe(true);
 
-    // FIXME: this path should take into account the file hashing in the file name
-    const sliceAsset1 = globSync(path.join("public/assets/admin/app-*.js"))[0];
-    const sliceAssetExists1 = await fs.pathExists(sliceAsset1);
-    expect(sliceAssetExists1).toBe(true);
-
-    // FIXME: this path should take into account the file hashing in the file name
-    const sliceAsset2 = globSync(path.join("public/assets/metrics/app-*.js"))[0];
-    const sliceAssetExists2 = await fs.pathExists(sliceAsset2);
-    expect(sliceAssetExists2).toBe(true);
-
-    const manifestExists = await fs.pathExists(path.join(dest, "public/assets.json"));
+    const manifestExists = await fs.pathExists(path.join(dest, "public/assets/assets.json"));
     expect(manifestExists).toBe(true);
 
     // Read and parse the manifest file
-    const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
+    const manifestContent = await fs.readFile(
+      path.join(dest, "public/assets/assets.json"),
+      "utf-8",
+    );
     const manifest = JSON.parse(manifestContent);
 
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
-      "admin/app.js": {
-        url: "/assets/admin/app-NLRESL5A.js",
+      "app-font.otf": {
+        url: "/assets/app-font-E47AB73F.otf",
       },
       "app.js": {
         url: "/assets/app-JLSTK5SN.js",
       },
-      "metrics/app.js": {
-        url: "/assets/metrics/app-27Z7ZALS.js",
+      "nested/app-image.jpg": {
+        url: "/assets/nested/app-image-C6CAD725.jpg",
+      },
+    });
+  });
+
+  test("copies assets from an admin slice to public/assets/admin and generates a manifest file", async () => {
+    // Prepate both app and assets slices to make it clear the app assets are _not_ compiled here
+    const appEntryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(appEntryPoint, "console.log('Hello, World!');");
+    const appImage = path.join(dest, "app/assets/images/nested/app-image.jpg");
+    await fs.writeFile(appImage, "");
+
+    const sliceEntryPoint = path.join(dest, "slices/admin/assets/js/app.js");
+    await fs.writeFile(sliceEntryPoint, "console.log('Hello, Admin!');");
+    const sliceImage = path.join(dest, "slices/admin/assets/images/nested/slice-image.jpg");
+    await fs.writeFile(sliceImage, "slice-image");
+    const sliceFont = path.join(dest, "slices/admin/assets/fonts/slice-font.otf");
+    await fs.writeFile(sliceFont, "slice-font");
+
+    // Compile assets
+    await assets.run({ root: dest, argv: ["--path=slices/admin", "--dest=public/assets/admin"] });
+
+    // FIXME: this path should take into account the file hashing in the file name
+    const sliceAsset = globSync(path.join("public/assets/admin/app-*.js"))[0];
+    const sliceAssetExists = await fs.pathExists(sliceAsset);
+    expect(sliceAssetExists).toBe(true);
+
+    const manifestExists = await fs.pathExists(path.join(dest, "public/assets/admin/assets.json"));
+    expect(manifestExists).toBe(true);
+
+    // Read and parse the manifest file
+    const manifestContent = await fs.readFile(
+      path.join(dest, "public/assets/admin/assets.json"),
+      "utf-8",
+    );
+    const manifest = JSON.parse(manifestContent);
+
+    // Check if the manifest contains the correct file paths
+    expect(manifest).toEqual({
+      "app.js": {
+        url: "/assets/admin/app-ITGLRDE7.js",
+      },
+      "nested/slice-image.jpg": {
+        url: "/assets/admin/nested/slice-image-4951F7C9.jpg",
+      },
+      "slice-font.otf": {
+        url: "/assets/admin/slice-font-826F93B7.otf",
       },
     });
   });
 
   test("generates SRI", async () => {
-    const entryPoint1 = path.join(dest, "app/assets/js/app.js");
-    await fs.writeFile(entryPoint1, "console.log('Hello, World!');");
+    const appEntryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(appEntryPoint, "console.log('Hello, World!');");
 
     // Compile assets
-    await assets.run({ root: dest, argv: ["--sri=sha256,sha384,sha512"] });
+    await assets.run({
+      root: dest,
+      argv: ["--path=app", "--dest=public/assets", "--sri=sha256,sha384,sha512"],
+    });
 
     // Read and parse the manifest file
-    const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
+    const manifestContent = await fs.readFile(
+      path.join(dest, "public/assets/assets.json"),
+      "utf-8",
+    );
     const manifest = JSON.parse(manifestContent);
 
     // Check if the manifest contains the correct file paths
@@ -106,49 +161,66 @@ describe("hanami-assets", () => {
     });
   });
 
-  test("Full app", async () => {
-    fs.copySync(path.join(__dirname, "fixtures", "todo"), dest);
+  test("handles CSS", async () => {
+    const entryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(entryPoint, 'import "../css/app.css";');
+    const cssFile = path.join(dest, "app/assets/css/app.css");
+    await fs.writeFile(cssFile, ".btn { background: #f00; }");
+
+    await assets.run({ root: dest, argv: ["--path=app", "--dest=public/assets"] });
+
+    const entryPointExists = await fs.pathExists(path.join("public/assets/app-6PW7FGD5.js"));
+    expect(entryPointExists).toBe(true);
+    const cssExists = await fs.pathExists(path.join("public/assets/app-HYVEQYF6.css"));
+    expect(cssExists).toBe(true);
+
+    const manifestContent = await fs.readFile(
+      path.join(dest, "public/assets/assets.json"),
+      "utf-8",
+    );
+    const manifest = JSON.parse(manifestContent);
+
+    expect(manifest).toEqual({
+      "app.css": {
+        url: "/assets/app-HYVEQYF6.css",
+      },
+      "app.js": {
+        url: "/assets/app-6PW7FGD5.js",
+      },
+    });
+  });
+
+  test("handles TypeScript", async () => {
+    const entryPoint1 = path.join(dest, "app/assets/js/app.ts");
+    await fs.writeFile(entryPoint1, "console.log('Hello from TS!');");
+    const entryPoint2 = path.join(dest, "app/assets/js/nested/app.tsx");
+    await fs.writeFile(entryPoint2, "console.log('Hello from TSX!');");
 
     // Compile assets
-    await assets.run({ root: dest, argv: ["--sri=sha384"] });
+    await assets.run({ root: dest, argv: ["--path=app", "--dest=public/assets"] });
+
+    const asset1Exists = await fs.pathExists(path.join("public/assets/app-2TLUHCQ6.js"));
+    expect(asset1Exists).toBe(true);
+    const asset2Exists = await fs.pathExists(path.join("public/assets/nested/app-5VHYTKP2.js"));
+    expect(asset2Exists).toBe(true);
+
+    const manifestExists = await fs.pathExists(path.join(dest, "public/assets/assets.json"));
+    expect(manifestExists).toBe(true);
 
     // Read and parse the manifest file
-    const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
+    const manifestContent = await fs.readFile(
+      path.join(dest, "public/assets/assets.json"),
+      "utf-8",
+    );
     const manifest = JSON.parse(manifestContent);
 
     // Check if the manifest contains the correct file paths
     expect(manifest).toEqual({
       "app.js": {
-        url: "/assets/app-YRYN3NGE.js",
-        sri: ["sha384-WAsFKE/RcOorRHTXmdRD8gxW+IxxfzKHbRgzcCuhFDC5StKi+6T+AawxcUmuv8Z5"],
+        url: "/assets/app-2TLUHCQ6.js",
       },
-      "background.jpg": {
-        url: "/assets/background-UU2XY655.jpg",
-        sri: ["sha384-M7QyKTUfzyVWNC4FoMYq0ypu7LDifAYWEtXRT5d6M3Prpau9t5wavW1216HhvCJc"],
-      },
-      "app.css": {
-        url: "/assets/app-4HPGUYGF.css",
-        sri: ["sha384-KsEObWWMvw+PouA5LgKpXohYpsOO4h9dL9pv7LwznkIg83/n1gkJo+S/oU/9Qb8Q"],
-      },
-      "login/app.js": {
-        url: "/assets/login/app-I4563JRL.js",
-        sri: ["sha384-z0TVeAyYeMsyiCnAqNu/OYs+IxvLwkTocy2uchAChAHmXaV68xYonUUzn1wJ4myH"],
-      },
-      "admin/app.js": {
-        url: "/assets/admin/app-H646WNEB.js",
-        sri: ["sha384-noZH9am6sCla+CnG7l+IGxBlTqo68Wz891fhqfIF1U2kgafUrRzZewAt0yA6jl15"],
-      },
-      "font.otf": {
-        url: "/assets/font-E1A70B27.otf",
-        sri: ["sha384-Lpm/oUsCQkOg41WyENyyB1zjaX/FB522VWlU44JKakwzwBxvu11le0ILkiPsR73K"],
-      },
-      "logo.png": {
-        url: "/assets/logo-C1EF77E4.png",
-        sri: ["sha384-7q5x+ZjZrCoWwyV0BTyc8HUPf1xr+n9l77gwxmwywPWSe0PtopZj1T8NTUPFo0FI"],
-      },
-      "nested/image.jpg": {
-        url: "/assets/nested/image-83509E65.jpg",
-        sri: ["sha384-M7QyKTUfzyVWNC4FoMYq0ypu7LDifAYWEtXRT5d6M3Prpau9t5wavW1216HhvCJc"],
+      "nested/app.js": {
+        url: "/assets/nested/app-5VHYTKP2.js",
       },
     });
   });
@@ -170,7 +242,10 @@ describe("hanami-assets", () => {
       const imageAsset = path.join(dest, "public", "assets", "background.jpg");
 
       // Watch for asset changes
-      let ctx = await assets.run({ root: dest, argv: ["--watch"] });
+      let ctx = await assets.run({
+        root: dest,
+        argv: ["--path=app", "--dest=public/assets", "--watch"],
+      });
 
       await fs.writeFile(entryPoint, "console.log('Hello, Watch!');");
 
@@ -205,11 +280,14 @@ describe("hanami-assets", () => {
       // Check if the asset has the expected contents
       expect(assetContent).toMatch('console.log("Hello, Watch!");');
 
-      const manifestExists = await fs.pathExists(path.join(dest, "public/assets.json"));
+      const manifestExists = await fs.pathExists(path.join(dest, "public/assets/assets.json"));
       expect(manifestExists).toBe(true);
 
       // Read and parse the manifest file
-      const manifestContent = await fs.readFile(path.join(dest, "public/assets.json"), "utf-8");
+      const manifestContent = await fs.readFile(
+        path.join(dest, "public/assets/assets.json"),
+        "utf-8",
+      );
       const manifest = JSON.parse(manifestContent);
 
       expect(manifest["background.jpg"]).toEqual({
