@@ -26,12 +26,15 @@ const loader: { [ext: string]: Loader } = {
   ".ttf": "file",
 };
 
+const assetsDirName = "assets";
 const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
 
 const findEntryPoints = (sliceRoot: string): Record<string, string> => {
   const result: Record<string, string> = {};
 
-  const entryPoints = globSync([path.join(sliceRoot, "assets", "js", "**", entryPointExtensions)]);
+  const entryPoints = globSync([
+    path.join(sliceRoot, assetsDirName, "js", "**", entryPointExtensions),
+  ]);
 
   entryPoints.forEach((entryPoint) => {
     let entryPointPath = entryPoint.replace(sliceRoot + "/assets/js/", "");
@@ -51,7 +54,7 @@ const findEntryPoints = (sliceRoot: string): Record<string, string> => {
 };
 
 const findExternalDirectories = (basePath: string): string[] => {
-  const assetDirsPattern = [path.join(basePath, "assets", "*")];
+  const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
   const excludeDirs = ["js", "css"];
 
   try {

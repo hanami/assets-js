@@ -18,10 +18,13 @@ const loader = {
     ".eot": "file",
     ".ttf": "file",
 };
+const assetsDirName = "assets";
 const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
 const findEntryPoints = (sliceRoot) => {
     const result = {};
-    const entryPoints = globSync([path.join(sliceRoot, "assets", "js", "**", entryPointExtensions)]);
+    const entryPoints = globSync([
+        path.join(sliceRoot, assetsDirName, "js", "**", entryPointExtensions),
+    ]);
     entryPoints.forEach((entryPoint) => {
         let entryPointPath = entryPoint.replace(sliceRoot + "/assets/js/", "");
         const { dir, name } = path.parse(entryPointPath);
@@ -36,7 +39,7 @@ const findEntryPoints = (sliceRoot) => {
     return result;
 };
 const findExternalDirectories = (basePath) => {
-    const assetDirsPattern = [path.join(basePath, "assets", "*")];
+    const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
     const excludeDirs = ["js", "css"];
     try {
         const dirs = globSync(assetDirsPattern, { nodir: false });

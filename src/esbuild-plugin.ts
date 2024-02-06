@@ -23,6 +23,8 @@ interface Asset {
   sri?: Array<string>;
 }
 
+const assetsDirName = "assets";
+
 const hanamiEsbuild = (options: PluginOptions): Plugin => {
   return {
     name: "hanami-esbuild",
@@ -215,7 +217,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
           // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
           var sourceUrl = copiedAsset[0].replace(
-            path.join(options.root, options.sourceDir, "assets") + "/",
+            path.join(options.root, options.sourceDir, assetsDirName) + "/",
             "",
           );
           // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
