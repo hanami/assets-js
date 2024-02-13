@@ -1,7 +1,15 @@
 # Hanami::AssetsJS
 Assets management via Esbuild
 
-## v2.1.0 - 2023-11-14
+## v2.1.0-rc.3 - 2024-02-16
+### Changed
+- [Tim Riley] Compile a single directory of assets only (specified by arguments), instead of crawling the app
+  structure to detect assets. The `--path` argument specifies the source directory of assets, and `--dest` specifies
+  the directory to output the compiled assets and the manifest file. The `hanami assets` CLI commands will provide
+  these arguments for each slice, so that each slice has its own separate compiled assets directory and manifest file.
+
+### Fixed
+- [Phil Arndt] Copy asset files from deeply nested directories.
 
 ## v2.1.0-rc.2 - 2023-11-02
 ### Added
