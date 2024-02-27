@@ -1,6 +1,8 @@
 # Hanami::AssetsJS
 Assets management via Esbuild
 
+## v2.1.0 - 2024-02-27
+
 ## v2.1.0-rc.3 - 2024-02-16
 ### Changed
 - [Tim Riley] Compile a single directory of assets only (specified by arguments), instead of crawling the app
