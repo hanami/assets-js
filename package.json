@@ -9,7 +9,14 @@
     "build": "tsc",
     "test": "jest"
   },
-  "keywords": ["hanami", "assets", "web", "build", "esbuild", "plugin"],
+  "keywords": [
+    "hanami",
+    "assets",
+    "web",
+    "build",
+    "esbuild",
+    "plugin"
+  ],
   "author": "Hanami Team",
   "license": "MIT",
   "homepage": "https://hanamirb.org",
