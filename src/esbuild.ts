@@ -85,7 +85,7 @@ const jointOptions = (root: string, args: Args, plugin: Plugin): EsbuildOptions 
     entryPoints: findEntryPoints(path.join(root, args.path)),
     plugins: [plugin],
   };
-}
+};
 
 export const buildOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: PluginOptions = {
@@ -114,7 +114,7 @@ export const watchOptions = (root: string, args: Args): EsbuildOptions => {
     ...jointOptions(root, args, plugin),
     entryNames: "[dir]/[name]",
     minify: false,
-    sourcemap: false
+    sourcemap: false,
   };
 
   return options;
