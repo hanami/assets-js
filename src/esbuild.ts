@@ -71,7 +71,7 @@ const findExternalDirectories = (basePath: string): string[] => {
   }
 };
 
-const jointOptions = (root: string, args: Args, plugin: Plugin): EsbuildOptions => {
+const commonOptions = (root: string, args: Args, plugin: Plugin): EsbuildOptions => {
   return {
     bundle: true,
     outdir: args.dest,
@@ -79,9 +79,6 @@ const jointOptions = (root: string, args: Args, plugin: Plugin): EsbuildOptions 
     loader: loader,
     external: findExternalDirectories(path.join(root, args.path)),
     logLevel: "info",
-    minify: true,
-    sourcemap: true,
-    entryNames: "[dir]/[name]-[hash]",
     entryPoints: findEntryPoints(path.join(root, args.path)),
     plugins: [plugin],
   };
@@ -97,7 +94,14 @@ export const buildOptions = (root: string, args: Args): EsbuildOptions => {
   };
   const plugin = esbuildPlugin(pluginOptions);
 
-  return jointOptions(root, args, plugin);
+  const options = {
+    ...commonOptions(root, args, plugin),
+    entryNames: "[dir]/[name]-[hash]",
+    minify: true,
+    sourcemap: true,
+  };
+
+  return options;
 };
 
 export const watchOptions = (root: string, args: Args): EsbuildOptions => {
@@ -111,7 +115,7 @@ export const watchOptions = (root: string, args: Args): EsbuildOptions => {
   const plugin = esbuildPlugin(pluginOptions);
 
   const options = {
-    ...jointOptions(root, args, plugin),
+    ...commonOptions(root, args, plugin),
     entryNames: "[dir]/[name]",
     minify: false,
     sourcemap: false,

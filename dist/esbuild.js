@@ -54,7 +54,18 @@ const findExternalDirectories = (basePath) => {
         return [];
     }
 };
-// TODO: reuse the logic between these two methods below
+const commonOptions = (root, args, plugin) => {
+    return {
+        bundle: true,
+        outdir: args.dest,
+        absWorkingDir: root,
+        loader: loader,
+        external: findExternalDirectories(path.join(root, args.path)),
+        logLevel: "info",
+        entryPoints: findEntryPoints(path.join(root, args.path)),
+        plugins: [plugin],
+    };
+};
 export const buildOptions = (root, args) => {
     const pluginOptions = {
         ...pluginDefaults,
@@ -65,17 +76,10 @@ export const buildOptions = (root, args) => {
     };
     const plugin = esbuildPlugin(pluginOptions);
     const options = {
-        bundle: true,
-        outdir: args.dest,
-        absWorkingDir: root,
-        loader: loader,
-        external: findExternalDirectories(path.join(root, args.path)),
-        logLevel: "info",
+        ...commonOptions(root, args, plugin),
+        entryNames: "[dir]/[name]-[hash]",
         minify: true,
         sourcemap: true,
-        entryNames: "[dir]/[name]-[hash]",
-        entryPoints: findEntryPoints(path.join(root, args.path)),
-        plugins: [plugin],
     };
     return options;
 };
@@ -89,17 +93,10 @@ export const watchOptions = (root, args) => {
     };
     const plugin = esbuildPlugin(pluginOptions);
     const options = {
-        bundle: true,
-        outdir: args.dest,
-        absWorkingDir: root,
-        loader: loader,
-        external: findExternalDirectories(path.join(root, args.path)),
-        logLevel: "info",
+        ...commonOptions(root, args, plugin),
+        entryNames: "[dir]/[name]",
         minify: false,
         sourcemap: false,
-        entryNames: "[dir]/[name]",
-        entryPoints: findEntryPoints(path.join(root, args.path)),
-        plugins: [plugin],
     };
     return options;
 };
