@@ -2,7 +2,7 @@ import path from "path";
 import { globSync } from "glob";
 import { BuildOptions, Loader, Plugin } from "esbuild";
 import { Args } from "./args.js";
-import esbuildPlugin, { PluginOptions, defaults as pluginDefaults } from "./esbuild-plugin.js";
+import esbuildPlugin, { PluginOptions } from "./esbuild-plugin.js";
 
 export interface EsbuildOptions extends Partial<BuildOptions> {
   plugins: Plugin[];
@@ -71,6 +71,16 @@ const findExternalDirectories = (basePath: string): string[] => {
   }
 };
 
+const commonPluginOptions = (root: string, args: Args): PluginOptions => {
+  return {
+    root: root,
+    sourceDir: args.path,
+    destDir: args.dest,
+    hash: true,
+    sriAlgorithms: [],
+  };
+};
+
 const commonOptions = (root: string, args: Args, plugin: Plugin): EsbuildOptions => {
   return {
     bundle: true,
@@ -86,10 +96,7 @@ const commonOptions = (root: string, args: Args, plugin: Plugin): EsbuildOptions
 
 export const buildOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: PluginOptions = {
-    ...pluginDefaults,
-    root: root,
-    sourceDir: args.path,
-    destDir: args.dest,
+    ...commonPluginOptions(root, args),
     sriAlgorithms: args.sri || [],
   };
   const plugin = esbuildPlugin(pluginOptions);
@@ -106,10 +113,7 @@ export const buildOptions = (root: string, args: Args): EsbuildOptions => {
 
 export const watchOptions = (root: string, args: Args): EsbuildOptions => {
   const pluginOptions: PluginOptions = {
-    ...pluginDefaults,
-    root: root,
-    sourceDir: args.path,
-    destDir: args.dest,
+    ...commonPluginOptions(root, args),
     hash: false,
   };
   const plugin = esbuildPlugin(pluginOptions);

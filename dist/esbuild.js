@@ -1,6 +1,6 @@
 import path from "path";
 import { globSync } from "glob";
-import esbuildPlugin, { defaults as pluginDefaults } from "./esbuild-plugin.js";
+import esbuildPlugin from "./esbuild-plugin.js";
 const loader = {
     ".tsx": "tsx",
     ".ts": "ts",
@@ -54,6 +54,15 @@ const findExternalDirectories = (basePath) => {
         return [];
     }
 };
+const commonPluginOptions = (root, args) => {
+    return {
+        root: root,
+        sourceDir: args.path,
+        destDir: args.dest,
+        hash: true,
+        sriAlgorithms: [],
+    };
+};
 const commonOptions = (root, args, plugin) => {
     return {
         bundle: true,
@@ -68,10 +77,7 @@ const commonOptions = (root, args, plugin) => {
 };
 export const buildOptions = (root, args) => {
     const pluginOptions = {
-        ...pluginDefaults,
-        root: root,
-        sourceDir: args.path,
-        destDir: args.dest,
+        ...commonPluginOptions(root, args),
         sriAlgorithms: args.sri || [],
     };
     const plugin = esbuildPlugin(pluginOptions);
@@ -85,10 +91,7 @@ export const buildOptions = (root, args) => {
 };
 export const watchOptions = (root, args) => {
     const pluginOptions = {
-        ...pluginDefaults,
-        root: root,
-        sourceDir: args.path,
-        destDir: args.dest,
+        ...commonPluginOptions(root, args),
         hash: false,
     };
     const plugin = esbuildPlugin(pluginOptions);

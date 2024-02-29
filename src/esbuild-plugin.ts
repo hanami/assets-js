@@ -13,11 +13,6 @@ export interface PluginOptions {
   hash: boolean;
 }
 
-export const defaults: Pick<PluginOptions, "sriAlgorithms" | "hash"> = {
-  sriAlgorithms: [],
-  hash: true,
-};
-
 interface Asset {
   url: string;
   sri?: Array<string>;
