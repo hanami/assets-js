@@ -1,6 +1,6 @@
 import path from "path";
 import { globSync } from "glob";
-import esbuildPlugin, { defaults as pluginDefaults } from "./esbuild-plugin.js";
+import esbuildPlugin from "./esbuild-plugin.js";
 const loader = {
     ".tsx": "tsx",
     ".ts": "ts",
@@ -54,52 +54,52 @@ const findExternalDirectories = (basePath) => {
         return [];
     }
 };
-// TODO: reuse the logic between these two methods below
-export const buildOptions = (root, args) => {
-    const pluginOptions = {
-        ...pluginDefaults,
+const commonPluginOptions = (root, args) => {
+    return {
         root: root,
         sourceDir: args.path,
         destDir: args.dest,
-        sriAlgorithms: args.sri || [],
+        hash: true,
+        sriAlgorithms: [],
     };
-    const plugin = esbuildPlugin(pluginOptions);
-    const options = {
+};
+const commonOptions = (root, args, plugin) => {
+    return {
         bundle: true,
         outdir: args.dest,
         absWorkingDir: root,
         loader: loader,
         external: findExternalDirectories(path.join(root, args.path)),
         logLevel: "info",
-        minify: true,
-        sourcemap: true,
-        entryNames: "[dir]/[name]-[hash]",
         entryPoints: findEntryPoints(path.join(root, args.path)),
         plugins: [plugin],
+    };
+};
+export const buildOptions = (root, args) => {
+    const pluginOptions = {
+        ...commonPluginOptions(root, args),
+        sriAlgorithms: args.sri || [],
+    };
+    const plugin = esbuildPlugin(pluginOptions);
+    const options = {
+        ...commonOptions(root, args, plugin),
+        entryNames: "[dir]/[name]-[hash]",
+        minify: true,
+        sourcemap: true,
     };
     return options;
 };
 export const watchOptions = (root, args) => {
     const pluginOptions = {
-        ...pluginDefaults,
-        root: root,
-        sourceDir: args.path,
-        destDir: args.dest,
+        ...commonPluginOptions(root, args),
         hash: false,
     };
     const plugin = esbuildPlugin(pluginOptions);
     const options = {
-        bundle: true,
-        outdir: args.dest,
-        absWorkingDir: root,
-        loader: loader,
-        external: findExternalDirectories(path.join(root, args.path)),
-        logLevel: "info",
+        ...commonOptions(root, args, plugin),
+        entryNames: "[dir]/[name]",
         minify: false,
         sourcemap: false,
-        entryNames: "[dir]/[name]",
-        entryPoints: findEntryPoints(path.join(root, args.path)),
-        plugins: [plugin],
     };
     return options;
 };

@@ -6,6 +6,5 @@ export interface PluginOptions {
     sriAlgorithms: Array<string>;
     hash: boolean;
 }
-export declare const defaults: Pick<PluginOptions, "sriAlgorithms" | "hash">;
 declare const hanamiEsbuild: (options: PluginOptions) => Plugin;
 export default hanamiEsbuild;

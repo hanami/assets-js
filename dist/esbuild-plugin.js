@@ -2,10 +2,6 @@ import fs from "fs-extra";
 import path from "path";
 import crypto from "node:crypto";
 const URL_SEPARATOR = "/";
-export const defaults = {
-    sriAlgorithms: [],
-    hash: true,
-};
 const assetsDirName = "assets";
 const hanamiEsbuild = (options) => {
     return {
