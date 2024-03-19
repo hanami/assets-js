@@ -131,6 +131,46 @@ describe("hanami-assets", () => {
     });
   });
 
+  test("handles references to files outside js/ and css/ directories", async () => {
+    const entryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(entryPoint, 'import "../css/app.css";');
+    const cssFile = path.join(dest, "app/assets/css/app.css");
+    await fs.writeFile(
+      cssFile,
+      '@font-face { font-family: "comic-mono"; src: url("../fonts/comic-mono.ttf"); }',
+    );
+    const fontFile = path.join(dest, "app/assets/fonts/comic-mono.ttf");
+    await fs.writeFile(fontFile, "");
+
+    await assets.run({ root: dest, argv: ["--path=app", "--dest=public/assets"] });
+
+    const entryPointExists = await fs.pathExists(path.join("public/assets/app-6PW7FGD5.js"));
+    expect(entryPointExists).toBe(true);
+    const cssExists = await fs.pathExists(path.join("public/assets/app-LI4JR7XG.css"));
+    expect(cssExists).toBe(true);
+    // NOT comic-mono-E3B0C442.ttf - it is a duplicate; this is what our manual asset copying creates.
+    const fontExists = await fs.pathExists(path.join("public/assets/comic-mono-55DNWN2R.ttf"));
+    expect(fontExists).toBe(true);
+
+    const manifestContent = await fs.readFile(
+      path.join(dest, "public/assets/assets.json"),
+      "utf-8",
+    );
+    const manifest = JSON.parse(manifestContent);
+
+    expect(manifest).toEqual({
+      "app.js": {
+        url: "/assets/app-6PW7FGD5.js",
+      },
+      "comic-mono.ttf": {
+        url: "/assets/comic-mono-55DNWN2R.ttf",
+      },
+      "app.css": {
+        url: "/assets/app-LI4JR7XG.css",
+      },
+    });
+  });
+
   test("generates SRI", async () => {
     const appEntryPoint = path.join(dest, "app/assets/js/app.js");
     await fs.writeFile(appEntryPoint, "console.log('Hello, World!');");
