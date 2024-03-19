@@ -2,6 +2,7 @@ import { BuildResult, Plugin, PluginBuild } from "esbuild";
 import fs from "fs-extra";
 import path from "path";
 import crypto from "node:crypto";
+import { globSync } from "glob";
 
 const URL_SEPARATOR = "/";
 
@@ -33,7 +34,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
       build.initialOptions.metafile = true;
 
       const manifestPath = path.join(options.root, options.destDir, "assets.json");
-      const externalDirs = build.initialOptions.external || [];
 
       build.onEnd(async (result: BuildResult) => {
         const outputs = result.metafile?.outputs;
@@ -97,6 +97,24 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           }
 
           return entryPoints;
+        }
+
+        function findExternalDirectories(basePath: string): string[] {
+          const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
+          const excludeDirs = ["js", "css"];
+
+          try {
+            const dirs = globSync(assetDirsPattern, { nodir: false });
+            const filteredDirs = dirs.filter((dir) => {
+              const dirName = dir.split(path.sep).pop();
+              return !excludeDirs.includes(dirName!);
+            });
+
+            return filteredDirs.map((dir) => path.join(dir, "*"));
+          } catch (err) {
+            console.error("Error listing external directories:", err);
+            return [];
+          }
         }
 
         // TODO: profile the current implementation vs blindly copying the asset
@@ -172,6 +190,8 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
 
         const copiedAssets: CopiedAsset[] = [];
+
+        const externalDirs = findExternalDirectories(path.join(options.root, options.sourceDir));
         externalDirs.forEach((pattern) => {
           copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
         });

@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import crypto from "node:crypto";
+import { globSync } from "glob";
 const URL_SEPARATOR = "/";
 const assetsDirName = "assets";
 const hanamiEsbuild = (options) => {
@@ -9,7 +10,6 @@ const hanamiEsbuild = (options) => {
         setup(build) {
             build.initialOptions.metafile = true;
             const manifestPath = path.join(options.root, options.destDir, "assets.json");
-            const externalDirs = build.initialOptions.external || [];
             build.onEnd(async (result) => {
                 const outputs = result.metafile?.outputs;
                 const assetsManifest = {};
@@ -60,6 +60,22 @@ const hanamiEsbuild = (options) => {
                         }
                     }
                     return entryPoints;
+                }
+                function findExternalDirectories(basePath) {
+                    const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
+                    const excludeDirs = ["js", "css"];
+                    try {
+                        const dirs = globSync(assetDirsPattern, { nodir: false });
+                        const filteredDirs = dirs.filter((dir) => {
+                            const dirName = dir.split(path.sep).pop();
+                            return !excludeDirs.includes(dirName);
+                        });
+                        return filteredDirs.map((dir) => path.join(dir, "*"));
+                    }
+                    catch (err) {
+                        console.error("Error listing external directories:", err);
+                        return [];
+                    }
                 }
                 // TODO: profile the current implementation vs blindly copying the asset
                 const copyAsset = (srcPath, destPath) => {
@@ -113,6 +129,7 @@ const hanamiEsbuild = (options) => {
                 }
                 const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
                 const copiedAssets = [];
+                const externalDirs = findExternalDirectories(path.join(options.root, options.sourceDir));
                 externalDirs.forEach((pattern) => {
                     copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
                 });
