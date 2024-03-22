@@ -34,6 +34,12 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
       build.initialOptions.metafile = true;
 
       const manifestPath = path.join(options.root, options.destDir, "assets.json");
+      const referencedFiles = new Set<string>();
+
+      build.onLoad({ filter: /.*/ }, (args) => {
+        referencedFiles.add(args.path);
+        return null;
+      });
 
       build.onEnd(async (result: BuildResult) => {
         const outputs = result.metafile?.outputs;
@@ -138,10 +144,12 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           return;
         };
 
+
         const processAssetDirectory = (
           pattern: string,
           compiledEntryPoints: Record<string, boolean>,
           options: PluginOptions,
+          referencedFiles: Set<string> // Add this parameter
         ): CopiedAsset[] => {
           const dirPath = path.dirname(pattern);
           const files = fs.readdirSync(dirPath, { recursive: true });
@@ -160,6 +168,11 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
               return;
             }
 
+            // Skip if the file is already referenced in CSS/JS
+            if (referencedFiles.has(sourcePath)) {
+              return;
+            }
+
             const fileHash = calculateHash(fs.readFileSync(sourcePath), options.hash);
             const fileExtension = path.extname(sourcePath);
             const baseName = path.basename(sourcePath, fileExtension);
@@ -173,7 +186,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
             );
 
             if (fs.lstatSync(sourcePath).isDirectory()) {
-              assets.push(...processAssetDirectory(destPath, compiledEntryPoints, options));
+              assets.push(...processAssetDirectory(destPath, compiledEntryPoints, options, referencedFiles));
             } else {
               copyAsset(sourcePath, destPath);
               assets.push({ sourcePath: sourcePath, destPath: destPath });
@@ -193,7 +206,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         const externalDirs = findExternalDirectories(path.join(options.root, options.sourceDir));
         externalDirs.forEach((pattern) => {
-          copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
+          copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options, referencedFiles));
         });
 
         function prepareAsset(assetPath: string, destinationUrl: string): Asset {
