@@ -149,7 +149,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           pattern: string,
           compiledEntryPoints: Record<string, boolean>,
           options: PluginOptions,
-          referencedFiles: Set<string> // Add this parameter
+          referencedFiles: Set<string>
         ): CopiedAsset[] => {
           const dirPath = path.dirname(pattern);
           const files = fs.readdirSync(dirPath, { recursive: true });
@@ -168,7 +168,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
               return;
             }
 
-            // Skip if the file is already referenced in CSS/JS
             if (referencedFiles.has(sourcePath)) {
               return;
             }

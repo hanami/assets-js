@@ -10,6 +10,11 @@ const hanamiEsbuild = (options) => {
         setup(build) {
             build.initialOptions.metafile = true;
             const manifestPath = path.join(options.root, options.destDir, "assets.json");
+            const referencedFiles = new Set();
+            build.onLoad({ filter: /.*/ }, (args) => {
+                referencedFiles.add(args.path);
+                return null;
+            });
             build.onEnd(async (result) => {
                 const outputs = result.metafile?.outputs;
                 const assetsManifest = {};
@@ -93,7 +98,7 @@ const hanamiEsbuild = (options) => {
                     fs.copyFileSync(srcPath, destPath);
                     return;
                 };
-                const processAssetDirectory = (pattern, compiledEntryPoints, options) => {
+                const processAssetDirectory = (pattern, compiledEntryPoints, options, referencedFiles) => {
                     const dirPath = path.dirname(pattern);
                     const files = fs.readdirSync(dirPath, { recursive: true });
                     const assets = [];
@@ -107,6 +112,9 @@ const hanamiEsbuild = (options) => {
                         if (!fs.statSync(sourcePath).isFile()) {
                             return;
                         }
+                        if (referencedFiles.has(sourcePath)) {
+                            return;
+                        }
                         const fileHash = calculateHash(fs.readFileSync(sourcePath), options.hash);
                         const fileExtension = path.extname(sourcePath);
                         const baseName = path.basename(sourcePath, fileExtension);
@@ -115,7 +123,7 @@ const hanamiEsbuild = (options) => {
                             .relative(dirPath, sourcePath)
                             .replace(path.basename(file.toString()), destFileName));
                         if (fs.lstatSync(sourcePath).isDirectory()) {
-                            assets.push(...processAssetDirectory(destPath, compiledEntryPoints, options));
+                            assets.push(...processAssetDirectory(destPath, compiledEntryPoints, options, referencedFiles));
                         }
                         else {
                             copyAsset(sourcePath, destPath);
@@ -131,7 +139,7 @@ const hanamiEsbuild = (options) => {
                 const copiedAssets = [];
                 const externalDirs = findExternalDirectories(path.join(options.root, options.sourceDir));
                 externalDirs.forEach((pattern) => {
-                    copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
+                    copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options, referencedFiles));
                 });
                 function prepareAsset(assetPath, destinationUrl) {
                     var asset = { url: destinationUrl };
