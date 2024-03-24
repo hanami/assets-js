@@ -34,6 +34,12 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
       build.initialOptions.metafile = true;
 
       const manifestPath = path.join(options.root, options.destDir, "assets.json");
+      const referencedFiles = new Set<string>();
+
+      build.onLoad({ filter: /.*/ }, (args) => {
+        referencedFiles.add(args.path);
+        return null;
+      });
 
       build.onEnd(async (result: BuildResult) => {
         const outputs = result.metafile?.outputs;
@@ -141,6 +147,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         const processAssetDirectory = (
           pattern: string,
           compiledEntryPoints: Record<string, boolean>,
+          referencedFiles: Set<String>,
           options: PluginOptions,
         ): CopiedAsset[] => {
           const dirPath = path.dirname(pattern);
@@ -152,6 +159,11 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
             // Skip if the file is already processed by esbuild
             if (compiledEntryPoints.hasOwnProperty(sourcePath)) {
+              return;
+            }
+
+            // Skip referenced files
+            if (referencedFiles.has(sourcePath)) {
               return;
             }
 
@@ -173,7 +185,9 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
             );
 
             if (fs.lstatSync(sourcePath).isDirectory()) {
-              assets.push(...processAssetDirectory(destPath, compiledEntryPoints, options));
+              assets.push(
+                ...processAssetDirectory(destPath, compiledEntryPoints, referencedFiles, options),
+              );
             } else {
               copyAsset(sourcePath, destPath);
               assets.push({ sourcePath: sourcePath, destPath: destPath });
@@ -193,7 +207,9 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         const externalDirs = findExternalDirectories(path.join(options.root, options.sourceDir));
         externalDirs.forEach((pattern) => {
-          copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
+          copiedAssets.push(
+            ...processAssetDirectory(pattern, compiledEntryPoints, referencedFiles, options),
+          );
         });
 
         function prepareAsset(assetPath: string, destinationUrl: string): Asset {
