@@ -98,16 +98,12 @@ const hanamiEsbuild = (options) => {
                     fs.copyFileSync(srcPath, destPath);
                     return;
                 };
-                const processAssetDirectory = (pattern, compiledEntryPoints, referencedFiles, options) => {
+                const processAssetDirectory = (pattern, referencedFiles, options) => {
                     const dirPath = path.dirname(pattern);
                     const files = fs.readdirSync(dirPath, { recursive: true });
                     const assets = [];
                     files.forEach((file) => {
                         const sourcePath = path.join(dirPath, file.toString());
-                        // Skip if the file is already processed by esbuild
-                        if (compiledEntryPoints.hasOwnProperty(sourcePath)) {
-                            return;
-                        }
                         // Skip referenced files
                         if (referencedFiles.has(sourcePath)) {
                             return;
@@ -124,7 +120,7 @@ const hanamiEsbuild = (options) => {
                             .relative(dirPath, sourcePath)
                             .replace(path.basename(file.toString()), destFileName));
                         if (fs.lstatSync(sourcePath).isDirectory()) {
-                            assets.push(...processAssetDirectory(destPath, compiledEntryPoints, referencedFiles, options));
+                            assets.push(...processAssetDirectory(destPath, referencedFiles, options));
                         }
                         else {
                             copyAsset(sourcePath, destPath);
@@ -136,11 +132,10 @@ const hanamiEsbuild = (options) => {
                 if (typeof outputs === "undefined") {
                     return;
                 }
-                const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
                 const copiedAssets = [];
                 const externalDirs = findExternalDirectories(path.join(options.root, options.sourceDir));
                 externalDirs.forEach((pattern) => {
-                    copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, referencedFiles, options));
+                    copiedAssets.push(...processAssetDirectory(pattern, referencedFiles, options));
                 });
                 function prepareAsset(assetPath, destinationUrl) {
                     var asset = { url: destinationUrl };
@@ -154,6 +149,7 @@ const hanamiEsbuild = (options) => {
                     return asset;
                 }
                 // Process entrypoints
+                const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
                 const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
                 for (const compiledEntryPoint in compiledEntryPoints) {
                     // Convert "public/assets/app-2TLUHCQ6.js" to "app.js"

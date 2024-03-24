@@ -146,7 +146,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         const processAssetDirectory = (
           pattern: string,
-          compiledEntryPoints: Record<string, boolean>,
           referencedFiles: Set<String>,
           options: PluginOptions,
         ): CopiedAsset[] => {
@@ -156,11 +155,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
           files.forEach((file) => {
             const sourcePath = path.join(dirPath, file.toString());
-
-            // Skip if the file is already processed by esbuild
-            if (compiledEntryPoints.hasOwnProperty(sourcePath)) {
-              return;
-            }
 
             // Skip referenced files
             if (referencedFiles.has(sourcePath)) {
@@ -185,9 +179,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
             );
 
             if (fs.lstatSync(sourcePath).isDirectory()) {
-              assets.push(
-                ...processAssetDirectory(destPath, compiledEntryPoints, referencedFiles, options),
-              );
+              assets.push(...processAssetDirectory(destPath, referencedFiles, options));
             } else {
               copyAsset(sourcePath, destPath);
               assets.push({ sourcePath: sourcePath, destPath: destPath });
@@ -201,15 +193,10 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           return;
         }
 
-        const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
-
         const copiedAssets: CopiedAsset[] = [];
-
         const externalDirs = findExternalDirectories(path.join(options.root, options.sourceDir));
         externalDirs.forEach((pattern) => {
-          copiedAssets.push(
-            ...processAssetDirectory(pattern, compiledEntryPoints, referencedFiles, options),
-          );
+          copiedAssets.push(...processAssetDirectory(pattern, referencedFiles, options));
         });
 
         function prepareAsset(assetPath: string, destinationUrl: string): Asset {
@@ -231,6 +218,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         }
 
         // Process entrypoints
+        const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
         const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
         for (const compiledEntryPoint in compiledEntryPoints) {
           // Convert "public/assets/app-2TLUHCQ6.js" to "app.js"
