@@ -71,40 +71,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           return result.slice(0, 8).toUpperCase();
         };
 
-        // Transforms the esbuild metafile outputs into an object containing mappings of outputs
-        // generated from entryPoints only.
-        //
-        // Converts this:
-        //
-        // {
-        //   'public/assets/admin/app-ITGLRDE7.js': {
-        //     imports: [],
-        //     exports: [],
-        //     entryPoint: 'slices/admin/assets/js/app.js',
-        //     inputs: { 'slices/admin/assets/js/app.js': [Object] },
-        //     bytes: 95
-        //   }
-        // }
-        //
-        //  To this:
-        //
-        // {
-        //   'public/assets/admin/app-ITGLRDE7.js': true
-        // }
-        function extractEsbuildCompiledEntrypoints(
-          esbuildOutputs: Record<string, any>,
-        ): Record<string, boolean> {
-          const entryPoints: Record<string, boolean> = {};
-
-          for (const key in esbuildOutputs) {
-            if (!key.endsWith(".map")) {
-              entryPoints[key] = true;
-            }
-          }
-
-          return entryPoints;
-        }
-
         function findExternalDirectories(basePath: string): string[] {
           const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
           const excludeDirs = ["js", "css"];
@@ -218,17 +184,16 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         }
 
         // Process entrypoints
-        const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
         const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
-        for (const compiledEntryPoint in compiledEntryPoints) {
+        for (const outputFile of outputFiles(outputs)) {
           // Convert "public/assets/app-2TLUHCQ6.js" to "app.js"
-          let sourceUrl = compiledEntryPoint
+          let sourceUrl = outputFile
             .replace(options.destDir + "/", "")
             .replace(fileHashRegexp, "$2");
 
-          const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
+          const destinationUrl = calulateDestinationUrl(outputFile);
 
-          assetsManifest[sourceUrl] = prepareAsset(compiledEntryPoint, destinationUrl);
+          assetsManifest[sourceUrl] = prepareAsset(outputFile, destinationUrl);
         }
 
         // Process copied assets
@@ -253,6 +218,18 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         // Write assets manifest to the destination directory
         await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
+
+        function outputFiles(esbuildOutputs: Record<string, any>): Array<string> {
+          const outputs: string[] = [];
+
+          for (const key in esbuildOutputs) {
+            if (!key.endsWith(".map")) {
+              outputs.push(key);
+            }
+          }
+
+          return outputs;
+        }
       });
     },
   };
