@@ -38,22 +38,6 @@ const findEntryPoints = (sliceRoot) => {
     });
     return result;
 };
-const findExternalDirectories = (basePath) => {
-    const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
-    const excludeDirs = ["js", "css"];
-    try {
-        const dirs = globSync(assetDirsPattern, { nodir: false });
-        const filteredDirs = dirs.filter((dir) => {
-            const dirName = dir.split(path.sep).pop();
-            return !excludeDirs.includes(dirName);
-        });
-        return filteredDirs.map((dir) => path.join(dir, "*"));
-    }
-    catch (err) {
-        console.error("Error listing external directories:", err);
-        return [];
-    }
-};
 const commonPluginOptions = (root, args) => {
     return {
         root: root,
@@ -69,7 +53,6 @@ const commonOptions = (root, args, plugin) => {
         outdir: args.dest,
         absWorkingDir: root,
         loader: loader,
-        external: findExternalDirectories(path.join(root, args.path)),
         logLevel: "info",
         entryPoints: findEntryPoints(path.join(root, args.path)),
         plugins: [plugin],

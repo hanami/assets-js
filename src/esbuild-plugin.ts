@@ -2,6 +2,7 @@ import { BuildResult, Plugin, PluginBuild } from "esbuild";
 import fs from "fs-extra";
 import path from "path";
 import crypto from "node:crypto";
+import { globSync } from "glob";
 
 const URL_SEPARATOR = "/";
 
@@ -33,7 +34,12 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
       build.initialOptions.metafile = true;
 
       const manifestPath = path.join(options.root, options.destDir, "assets.json");
-      const externalDirs = build.initialOptions.external || [];
+      const referencedFiles = new Set<string>();
+
+      build.onLoad({ filter: /.*/ }, (args) => {
+        referencedFiles.add(args.path);
+        return null;
+      });
 
       build.onEnd(async (result: BuildResult) => {
         const outputs = result.metafile?.outputs;
@@ -65,38 +71,22 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           return result.slice(0, 8).toUpperCase();
         };
 
-        // Transforms the esbuild metafile outputs into an object containing mappings of outputs
-        // generated from entryPoints only.
-        //
-        // Converts this:
-        //
-        // {
-        //   'public/assets/admin/app-ITGLRDE7.js': {
-        //     imports: [],
-        //     exports: [],
-        //     entryPoint: 'slices/admin/assets/js/app.js',
-        //     inputs: { 'slices/admin/assets/js/app.js': [Object] },
-        //     bytes: 95
-        //   }
-        // }
-        //
-        //  To this:
-        //
-        // {
-        //   'public/assets/admin/app-ITGLRDE7.js': true
-        // }
-        function extractEsbuildCompiledEntrypoints(
-          esbuildOutputs: Record<string, any>,
-        ): Record<string, boolean> {
-          const entryPoints: Record<string, boolean> = {};
+        function findExternalDirectories(basePath: string): string[] {
+          const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
+          const excludeDirs = ["js", "css"];
 
-          for (const key in esbuildOutputs) {
-            if (!key.endsWith(".map")) {
-              entryPoints[key] = true;
-            }
+          try {
+            const dirs = globSync(assetDirsPattern, { nodir: false });
+            const filteredDirs = dirs.filter((dir) => {
+              const dirName = dir.split(path.sep).pop();
+              return !excludeDirs.includes(dirName!);
+            });
+
+            return filteredDirs.map((dir) => path.join(dir, "*"));
+          } catch (err) {
+            console.error("Error listing external directories:", err);
+            return [];
           }
-
-          return entryPoints;
         }
 
         // TODO: profile the current implementation vs blindly copying the asset
@@ -122,7 +112,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         const processAssetDirectory = (
           pattern: string,
-          compiledEntryPoints: Record<string, boolean>,
+          referencedFiles: Set<String>,
           options: PluginOptions,
         ): CopiedAsset[] => {
           const dirPath = path.dirname(pattern);
@@ -132,8 +122,8 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           files.forEach((file) => {
             const sourcePath = path.join(dirPath, file.toString());
 
-            // Skip if the file is already processed by esbuild
-            if (compiledEntryPoints.hasOwnProperty(sourcePath)) {
+            // Skip referenced files
+            if (referencedFiles.has(sourcePath)) {
               return;
             }
 
@@ -155,7 +145,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
             );
 
             if (fs.lstatSync(sourcePath).isDirectory()) {
-              assets.push(...processAssetDirectory(destPath, compiledEntryPoints, options));
+              assets.push(...processAssetDirectory(destPath, referencedFiles, options));
             } else {
               copyAsset(sourcePath, destPath);
               assets.push({ sourcePath: sourcePath, destPath: destPath });
@@ -169,11 +159,10 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           return;
         }
 
-        const compiledEntryPoints = extractEsbuildCompiledEntrypoints(outputs);
-
         const copiedAssets: CopiedAsset[] = [];
+        const externalDirs = findExternalDirectories(path.join(options.root, options.sourceDir));
         externalDirs.forEach((pattern) => {
-          copiedAssets.push(...processAssetDirectory(pattern, compiledEntryPoints, options));
+          copiedAssets.push(...processAssetDirectory(pattern, referencedFiles, options));
         });
 
         function prepareAsset(assetPath: string, destinationUrl: string): Asset {
@@ -196,15 +185,16 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         // Process entrypoints
         const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
-        for (const compiledEntryPoint in compiledEntryPoints) {
+
+        for (const outputFile of outputFiles(outputs)) {
           // Convert "public/assets/app-2TLUHCQ6.js" to "app.js"
-          let sourceUrl = compiledEntryPoint
+          let sourceUrl = outputFile
             .replace(options.destDir + "/", "")
             .replace(fileHashRegexp, "$2");
 
-          const destinationUrl = calulateDestinationUrl(compiledEntryPoint);
+          const destinationUrl = calulateDestinationUrl(outputFile);
 
-          assetsManifest[sourceUrl] = prepareAsset(compiledEntryPoint, destinationUrl);
+          assetsManifest[sourceUrl] = prepareAsset(outputFile, destinationUrl);
         }
 
         // Process copied assets
@@ -229,6 +219,18 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         // Write assets manifest to the destination directory
         await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
+
+        function outputFiles(esbuildOutputs: Record<string, any>): Array<string> {
+          const outputs: string[] = [];
+
+          for (const key in esbuildOutputs) {
+            if (!key.endsWith(".map")) {
+              outputs.push(key);
+            }
+          }
+
+          return outputs;
+        }
       });
     },
   };
