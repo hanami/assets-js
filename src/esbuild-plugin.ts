@@ -170,15 +170,50 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         // Add files already bundled by esbuild into the manifest
         const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
-        for (const outputFile of outputFiles(outputs)) {
-          // Convert "public/assets/app-2TLUHCQ6.js" to "app.js"
-          let sourceUrl = outputFile
-            .replace(options.destDir + "/", "")
-            .replace(fileHashRegexp, "$2");
+        const sourceAssetsDir = path.join(options.sourceDir, assetsDirName); // TODO make better
+        for (const outputFile in outputs) {
+          // Ignore esbuild's generated map files
+          if (outputFile.endsWith(".map")) {
+            continue;
+          }
+
+          const outputAttrs = outputs[outputFile];
+          const inputFiles = Object.keys(outputAttrs.inputs);
+
+          // Determine the manifest key for the esbuild output file
+          let manifestKey: string;
+          if (
+            !(outputFile.endsWith(".js") || outputFile.endsWith(".css")) &&
+            inputFiles.length == 1 &&
+            inputFiles[0].startsWith(sourceAssetsDir + path.sep)
+          ) {
+            // A non-JS/CSS output with a single input will be an asset file that has been been
+            // referenced from JS/CSS.
+            //
+            // In this case, preserve the original input file's path in the manifest key, so it
+            // matches any other files copied over from that path via processAssetDirectory.
+            //
+            // For example, given the input file "app/assets/images/icons/some-icon.png", return a
+            // manifest key of "icons/some-icon.png".
+            manifestKey = inputFiles[0]
+              .substring(sourceAssetsDir.length + 1) // + 1 to account for the sep
+              .split(path.sep)
+              .slice(1)
+              .join(path.sep);
+          } else {
+            // For all other outputs, determine the manifest key based on the output file name,
+            // stripping away the hash suffix added by esbuild.
+            //
+            // For example, given the output "public/assets/app-2TLUHCQ6.js", return an manifest
+            // key of "app.js".
+            manifestKey = outputFile
+              .replace(options.destDir + path.sep, "")
+              .replace(fileHashRegexp, "$2");
+          }
 
           const destinationUrl = calulateDestinationUrl(outputFile);
 
-          assetsManifest[sourceUrl] = prepareAsset(outputFile, destinationUrl);
+          assetsManifest[manifestKey] = prepareAsset(outputFile, destinationUrl);
         }
 
         // Add copied assets into the manifest
@@ -203,18 +238,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         // Write assets manifest to the destination directory
         await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
-
-        function outputFiles(esbuildOutputs: Record<string, any>): Array<string> {
-          const outputs: string[] = [];
-
-          for (const key in esbuildOutputs) {
-            if (!key.endsWith(".map")) {
-              outputs.push(key);
-            }
-          }
-
-          return outputs;
-        }
 
         function extraAssetDirectories(basePath: string): string[] {
           const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
