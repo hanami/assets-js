@@ -20,72 +20,6 @@ const hanamiEsbuild = (options) => {
             build.onEnd(async (result) => {
                 const outputs = result.metafile?.outputs;
                 const assetsManifest = {};
-                const calulateDestinationUrl = (str) => {
-                    return normalizeUrl(str).replace(/public/, "");
-                };
-                const normalizeUrl = (str) => {
-                    return str.replace(/[\\]+/, URL_SEPARATOR);
-                };
-                const calculateSubresourceIntegrity = (algorithm, path) => {
-                    const content = fs.readFileSync(path, "utf8");
-                    const hash = crypto.createHash(algorithm).update(content).digest("base64");
-                    return `${algorithm}-${hash}`;
-                };
-                // Inspired by https://github.com/evanw/esbuild/blob/2f2b90a99d626921d25fe6d7d0ca50bd48caa427/internal/bundler/bundler.go#L1057
-                const calculateHash = (hashBytes, hash) => {
-                    if (!hash) {
-                        return null;
-                    }
-                    const result = crypto.createHash("sha256").update(hashBytes).digest("hex");
-                    return result.slice(0, 8).toUpperCase();
-                };
-                // TODO: profile the current implementation vs blindly copying the asset
-                const copyAsset = (srcPath, destPath) => {
-                    if (fs.existsSync(destPath)) {
-                        const srcStat = fs.statSync(srcPath);
-                        const destStat = fs.statSync(destPath);
-                        // File already exists and is up-to-date, skip copying
-                        if (srcStat.mtimeMs <= destStat.mtimeMs) {
-                            return;
-                        }
-                    }
-                    if (!fs.existsSync(path.dirname(destPath))) {
-                        fs.mkdirSync(path.dirname(destPath), { recursive: true });
-                    }
-                    fs.copyFileSync(srcPath, destPath);
-                    return;
-                };
-                const processAssetDirectory = (pattern, referencedFiles, options) => {
-                    const dirPath = path.dirname(pattern);
-                    const files = fs.readdirSync(dirPath, { recursive: true });
-                    const assets = [];
-                    files.forEach((file) => {
-                        const sourcePath = path.join(dirPath, file.toString());
-                        // Skip referenced files
-                        if (referencedFiles.has(sourcePath)) {
-                            return;
-                        }
-                        // Skip directories and any other non-files
-                        if (!fs.statSync(sourcePath).isFile()) {
-                            return;
-                        }
-                        const fileHash = calculateHash(fs.readFileSync(sourcePath), options.hash);
-                        const fileExtension = path.extname(sourcePath);
-                        const baseName = path.basename(sourcePath, fileExtension);
-                        const destFileName = [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
-                        const destPath = path.join(options.destDir, path
-                            .relative(dirPath, sourcePath)
-                            .replace(path.basename(file.toString()), destFileName));
-                        if (fs.lstatSync(sourcePath).isDirectory()) {
-                            assets.push(...processAssetDirectory(destPath, referencedFiles, options));
-                        }
-                        else {
-                            copyAsset(sourcePath, destPath);
-                            assets.push({ sourcePath: sourcePath, destPath: destPath });
-                        }
-                    });
-                    return assets;
-                };
                 if (typeof outputs === "undefined") {
                     return;
                 }
@@ -163,6 +97,10 @@ const hanamiEsbuild = (options) => {
                 }
                 // Write assets manifest to the destination directory
                 await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
+                return;
+                //
+                // Helper functions
+                //
                 function extraAssetDirectories(basePath) {
                     const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
                     const excludeDirs = ["js", "css"];
@@ -178,6 +116,72 @@ const hanamiEsbuild = (options) => {
                         console.error("Error listing external directories:", err);
                         return [];
                     }
+                }
+                function calulateDestinationUrl(str) {
+                    return normalizeUrl(str).replace(/public/, "");
+                }
+                function normalizeUrl(str) {
+                    return str.replace(/[\\]+/, URL_SEPARATOR);
+                }
+                function calculateSubresourceIntegrity(algorithm, path) {
+                    const content = fs.readFileSync(path, "utf8");
+                    const hash = crypto.createHash(algorithm).update(content).digest("base64");
+                    return `${algorithm}-${hash}`;
+                }
+                // Inspired by https://github.com/evanw/esbuild/blob/2f2b90a99d626921d25fe6d7d0ca50bd48caa427/internal/bundler/bundler.go#L1057
+                function calculateHash(hashBytes, hash) {
+                    if (!hash) {
+                        return null;
+                    }
+                    const result = crypto.createHash("sha256").update(hashBytes).digest("hex");
+                    return result.slice(0, 8).toUpperCase();
+                }
+                function processAssetDirectory(pattern, referencedFiles, options) {
+                    const dirPath = path.dirname(pattern);
+                    const files = fs.readdirSync(dirPath, { recursive: true });
+                    const assets = [];
+                    files.forEach((file) => {
+                        const sourcePath = path.join(dirPath, file.toString());
+                        // Skip referenced files
+                        if (referencedFiles.has(sourcePath)) {
+                            return;
+                        }
+                        // Skip directories and any other non-files
+                        if (!fs.statSync(sourcePath).isFile()) {
+                            return;
+                        }
+                        const fileHash = calculateHash(fs.readFileSync(sourcePath), options.hash);
+                        const fileExtension = path.extname(sourcePath);
+                        const baseName = path.basename(sourcePath, fileExtension);
+                        const destFileName = [baseName, fileHash].filter((item) => item !== null).join("-") + fileExtension;
+                        const destPath = path.join(options.destDir, path
+                            .relative(dirPath, sourcePath)
+                            .replace(path.basename(file.toString()), destFileName));
+                        if (fs.lstatSync(sourcePath).isDirectory()) {
+                            assets.push(...processAssetDirectory(destPath, referencedFiles, options));
+                        }
+                        else {
+                            copyAsset(sourcePath, destPath);
+                            assets.push({ sourcePath: sourcePath, destPath: destPath });
+                        }
+                    });
+                    return assets;
+                }
+                // TODO: profile the current implementation vs blindly copying the asset
+                function copyAsset(srcPath, destPath) {
+                    if (fs.existsSync(destPath)) {
+                        const srcStat = fs.statSync(srcPath);
+                        const destStat = fs.statSync(destPath);
+                        // File already exists and is up-to-date, skip copying
+                        if (srcStat.mtimeMs <= destStat.mtimeMs) {
+                            return;
+                        }
+                    }
+                    if (!fs.existsSync(path.dirname(destPath))) {
+                        fs.mkdirSync(path.dirname(destPath), { recursive: true });
+                    }
+                    fs.copyFileSync(srcPath, destPath);
+                    return;
                 }
             });
         },
