@@ -34,13 +34,15 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
       build.initialOptions.metafile = true;
 
       const manifestPath = path.join(options.root, options.destDir, "assets.json");
-      const referencedFiles = new Set<string>();
 
+      // Track files loaded by esbuild so we don't double-process them.
+      const referencedFiles = new Set<string>();
       build.onLoad({ filter: /.*/ }, (args) => {
         referencedFiles.add(args.path);
         return null;
       });
 
+      // After build, copy over any non-referenced asset files, and create a manifest.
       build.onEnd(async (result: BuildResult) => {
         const outputs = result.metafile?.outputs;
         const assetsManifest: Record<string, Asset> = {};
@@ -141,6 +143,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           return;
         }
 
+        // Copy extra asset files (in dirs besides js/ and css/) into the destination directory
         const copiedAssets: CopiedAsset[] = [];
         const extraAssetDirs = extraAssetDirectories(path.join(options.root, options.sourceDir));
         extraAssetDirs.forEach((pattern) => {
@@ -165,7 +168,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           return asset;
         }
 
-        // Process entrypoints
+        // Add files already bundled by esbuild into the manifest
         const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
         for (const outputFile of outputFiles(outputs)) {
           // Convert "public/assets/app-2TLUHCQ6.js" to "app.js"
@@ -178,7 +181,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           assetsManifest[sourceUrl] = prepareAsset(outputFile, destinationUrl);
         }
 
-        // Process copied assets
+        // Add copied assets into the manifest
         for (const copiedAsset of copiedAssets) {
           // TODO: I wonder if we can skip .map files earlier
           if (copiedAsset.sourcePath.endsWith(".map")) {
