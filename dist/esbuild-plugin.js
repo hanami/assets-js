@@ -37,22 +37,6 @@ const hanamiEsbuild = (options) => {
                     const result = crypto.createHash("sha256").update(hashBytes).digest("hex");
                     return result.slice(0, 8).toUpperCase();
                 };
-                function findExternalDirectories(basePath) {
-                    const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
-                    const excludeDirs = ["js", "css"];
-                    try {
-                        const dirs = globSync(assetDirsPattern, { nodir: false });
-                        const filteredDirs = dirs.filter((dir) => {
-                            const dirName = dir.split(path.sep).pop();
-                            return !excludeDirs.includes(dirName);
-                        });
-                        return filteredDirs.map((dir) => path.join(dir, "*"));
-                    }
-                    catch (err) {
-                        console.error("Error listing external directories:", err);
-                        return [];
-                    }
-                }
                 // TODO: profile the current implementation vs blindly copying the asset
                 const copyAsset = (srcPath, destPath) => {
                     if (fs.existsSync(destPath)) {
@@ -104,8 +88,8 @@ const hanamiEsbuild = (options) => {
                     return;
                 }
                 const copiedAssets = [];
-                const externalDirs = findExternalDirectories(path.join(options.root, options.sourceDir));
-                externalDirs.forEach((pattern) => {
+                const extraAssetDirs = extraAssetDirectories(path.join(options.root, options.sourceDir));
+                extraAssetDirs.forEach((pattern) => {
                     copiedAssets.push(...processAssetDirectory(pattern, referencedFiles, options));
                 });
                 function prepareAsset(assetPath, destinationUrl) {
@@ -152,6 +136,22 @@ const hanamiEsbuild = (options) => {
                         }
                     }
                     return outputs;
+                }
+                function extraAssetDirectories(basePath) {
+                    const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
+                    const excludeDirs = ["js", "css"];
+                    try {
+                        const dirs = globSync(assetDirsPattern, { nodir: false });
+                        const filteredDirs = dirs.filter((dir) => {
+                            const dirName = dir.split(path.sep).pop();
+                            return !excludeDirs.includes(dirName);
+                        });
+                        return filteredDirs.map((dir) => path.join(dir, "*"));
+                    }
+                    catch (err) {
+                        console.error("Error listing external directories:", err);
+                        return [];
+                    }
                 }
             });
         },

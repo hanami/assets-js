@@ -71,24 +71,6 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           return result.slice(0, 8).toUpperCase();
         };
 
-        function findExternalDirectories(basePath: string): string[] {
-          const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
-          const excludeDirs = ["js", "css"];
-
-          try {
-            const dirs = globSync(assetDirsPattern, { nodir: false });
-            const filteredDirs = dirs.filter((dir) => {
-              const dirName = dir.split(path.sep).pop();
-              return !excludeDirs.includes(dirName!);
-            });
-
-            return filteredDirs.map((dir) => path.join(dir, "*"));
-          } catch (err) {
-            console.error("Error listing external directories:", err);
-            return [];
-          }
-        }
-
         // TODO: profile the current implementation vs blindly copying the asset
         const copyAsset = (srcPath: string, destPath: string): void => {
           if (fs.existsSync(destPath)) {
@@ -160,8 +142,8 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         }
 
         const copiedAssets: CopiedAsset[] = [];
-        const externalDirs = findExternalDirectories(path.join(options.root, options.sourceDir));
-        externalDirs.forEach((pattern) => {
+        const extraAssetDirs = extraAssetDirectories(path.join(options.root, options.sourceDir));
+        extraAssetDirs.forEach((pattern) => {
           copiedAssets.push(...processAssetDirectory(pattern, referencedFiles, options));
         });
 
@@ -229,6 +211,24 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           }
 
           return outputs;
+        }
+
+        function extraAssetDirectories(basePath: string): string[] {
+          const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
+          const excludeDirs = ["js", "css"];
+
+          try {
+            const dirs = globSync(assetDirsPattern, { nodir: false });
+            const filteredDirs = dirs.filter((dir) => {
+              const dirName = dir.split(path.sep).pop();
+              return !excludeDirs.includes(dirName!);
+            });
+
+            return filteredDirs.map((dir) => path.join(dir, "*"));
+          } catch (err) {
+            console.error("Error listing external directories:", err);
+            return [];
+          }
         }
       });
     },
