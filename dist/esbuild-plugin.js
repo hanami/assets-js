@@ -22,7 +22,7 @@ const hanamiEsbuild = (options) => {
             // After build, copy over any non-referenced asset files, and create a manifest.
             build.onEnd(async (result) => {
                 const outputs = result.metafile?.outputs;
-                const assetsManifest = {};
+                const manifest = {};
                 if (typeof outputs === "undefined") {
                     return;
                 }
@@ -68,7 +68,7 @@ const hanamiEsbuild = (options) => {
                             .replace(options.destDir + path.sep, "")
                             .replace(fileHashRegexp, "$2");
                     }
-                    assetsManifest[manifestKey] = prepareAsset(outputFile);
+                    manifest[manifestKey] = prepareAsset(outputFile);
                 }
                 // Add copied assets into the manifest
                 for (const copiedAsset of copiedAssets) {
@@ -80,10 +80,10 @@ const hanamiEsbuild = (options) => {
                     var sourceUrl = copiedAsset.sourcePath.replace(assetsSourcePath + path.sep, "");
                     // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
                     sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
-                    assetsManifest[sourceUrl] = prepareAsset(copiedAsset.destPath);
+                    manifest[sourceUrl] = prepareAsset(copiedAsset.destPath);
                 }
                 // Write assets manifest to the destination directory
-                await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
+                await fs.writeJson(manifestPath, manifest, { spaces: 2 });
                 //
                 // Helper functions
                 //
