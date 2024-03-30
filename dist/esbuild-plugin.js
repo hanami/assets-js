@@ -4,12 +4,15 @@ import crypto from "node:crypto";
 import { globSync } from "glob";
 const URL_SEPARATOR = "/";
 const assetsDirName = "assets";
+const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
 const hanamiEsbuild = (options) => {
     return {
         name: "hanami-esbuild",
         setup(build) {
             build.initialOptions.metafile = true;
             const manifestPath = path.join(options.root, options.destDir, "assets.json");
+            const assetsSourcePath = path.join(options.root, options.sourceDir, assetsDirName);
+            const assetsSourceDir = path.join(options.sourceDir, assetsDirName);
             // Track files loaded by esbuild so we don't double-process them.
             const referencedFiles = new Set();
             build.onLoad({ filter: /.*/ }, (args) => {
@@ -25,13 +28,10 @@ const hanamiEsbuild = (options) => {
                 }
                 // Copy extra asset files (in dirs besides js/ and css/) into the destination directory
                 const copiedAssets = [];
-                const extraAssetDirs = extraAssetDirectories(path.join(options.root, options.sourceDir));
-                extraAssetDirs.forEach((pattern) => {
+                assetDirectories().forEach((pattern) => {
                     copiedAssets.push(...processAssetDirectory(pattern, referencedFiles, options));
                 });
                 // Add files already bundled by esbuild into the manifest
-                const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
-                const sourceAssetsDir = path.join(options.sourceDir, assetsDirName); // TODO make better
                 for (const outputFile in outputs) {
                     // Ignore esbuild's generated map files
                     if (outputFile.endsWith(".map")) {
@@ -43,7 +43,7 @@ const hanamiEsbuild = (options) => {
                     let manifestKey;
                     if (!(outputFile.endsWith(".js") || outputFile.endsWith(".css")) &&
                         inputFiles.length == 1 &&
-                        inputFiles[0].startsWith(sourceAssetsDir + path.sep)) {
+                        inputFiles[0].startsWith(assetsSourceDir + path.sep)) {
                         // A non-JS/CSS output with a single input will be an asset file that has been been
                         // referenced from JS/CSS.
                         //
@@ -53,7 +53,7 @@ const hanamiEsbuild = (options) => {
                         // For example, given the input file "app/assets/images/icons/some-icon.png", return a
                         // manifest key of "icons/some-icon.png".
                         manifestKey = inputFiles[0]
-                            .substring(sourceAssetsDir.length + 1) // + 1 to account for the sep
+                            .substring(assetsSourceDir.length + 1) // + 1 to account for the sep
                             .split(path.sep)
                             .slice(1)
                             .join(path.sep);
@@ -68,8 +68,7 @@ const hanamiEsbuild = (options) => {
                             .replace(options.destDir + path.sep, "")
                             .replace(fileHashRegexp, "$2");
                     }
-                    const destinationUrl = calulateDestinationUrl(outputFile);
-                    assetsManifest[manifestKey] = prepareAsset(outputFile, destinationUrl);
+                    assetsManifest[manifestKey] = prepareAsset(outputFile);
                 }
                 // Add copied assets into the manifest
                 for (const copiedAsset of copiedAssets) {
@@ -77,23 +76,21 @@ const hanamiEsbuild = (options) => {
                     if (copiedAsset.sourcePath.endsWith(".map")) {
                         continue;
                     }
-                    const destinationUrl = calulateDestinationUrl(copiedAsset.destPath);
                     // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
-                    var sourceUrl = copiedAsset.sourcePath.replace(path.join(options.root, options.sourceDir, assetsDirName) + "/", "");
+                    var sourceUrl = copiedAsset.sourcePath.replace(assetsSourcePath + path.sep, "");
                     // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
                     sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
-                    assetsManifest[sourceUrl] = prepareAsset(copiedAsset.destPath, destinationUrl);
+                    assetsManifest[sourceUrl] = prepareAsset(copiedAsset.destPath);
                 }
                 // Write assets manifest to the destination directory
                 await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
                 //
                 // Helper functions
                 //
-                function extraAssetDirectories(basePath) {
-                    const assetDirsPattern = [path.join(basePath, assetsDirName, "*")];
+                function assetDirectories() {
                     const excludeDirs = ["js", "css"];
                     try {
-                        const dirs = globSync(assetDirsPattern, { nodir: false });
+                        const dirs = globSync([path.join(assetsSourcePath, "*")], { nodir: false });
                         const filteredDirs = dirs.filter((dir) => {
                             const dirName = dir.split(path.sep).pop();
                             return !excludeDirs.includes(dirName);
@@ -152,14 +149,8 @@ const hanamiEsbuild = (options) => {
                     fs.copyFileSync(srcPath, destPath);
                     return;
                 }
-                function calulateDestinationUrl(str) {
-                    return normalizeUrl(str).replace(/public/, "");
-                }
-                function normalizeUrl(str) {
-                    return str.replace(/[\\]+/, URL_SEPARATOR);
-                }
-                function prepareAsset(assetPath, destinationUrl) {
-                    var asset = { url: destinationUrl };
+                function prepareAsset(assetPath) {
+                    var asset = { url: calculateDestinationUrl(assetPath) };
                     if (options.sriAlgorithms.length > 0) {
                         asset.sri = [];
                         for (const algorithm of options.sriAlgorithms) {
@@ -168,6 +159,10 @@ const hanamiEsbuild = (options) => {
                         }
                     }
                     return asset;
+                }
+                function calculateDestinationUrl(str) {
+                    const normalizedUrl = str.replace(/[\\]+/, URL_SEPARATOR);
+                    return normalizedUrl.replace(/public/, "");
                 }
                 function calculateSubresourceIntegrity(algorithm, path) {
                     const content = fs.readFileSync(path, "utf8");
