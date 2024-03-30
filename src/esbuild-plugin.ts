@@ -57,7 +57,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         // Copy extra asset files (in dirs besides js/ and css/) into the destination directory
         const copiedAssets: CopiedAsset[] = [];
         assetDirectories().forEach((pattern) => {
-          copiedAssets.push(...processAssetDirectory(pattern, loadedFiles, options));
+          copiedAssets.push(...processAssetDirectory(pattern));
         });
 
         // Add files already bundled by esbuild into the manifest
@@ -143,11 +143,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           }
         }
 
-        function processAssetDirectory(
-          pattern: string,
-          loadedFiles: Set<String>,
-          options: PluginOptions,
-        ): CopiedAsset[] {
+        function processAssetDirectory(pattern: string): CopiedAsset[] {
           const dirPath = path.dirname(pattern);
           const files = fs.readdirSync(dirPath, { recursive: true });
           const assets: CopiedAsset[] = [];
@@ -178,7 +174,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
             );
 
             if (fs.lstatSync(sourcePath).isDirectory()) {
-              assets.push(...processAssetDirectory(destPath, loadedFiles, options));
+              assets.push(...processAssetDirectory(destPath));
             } else {
               copyAsset(sourcePath, destPath);
               assets.push({ sourcePath: sourcePath, destPath: destPath });
