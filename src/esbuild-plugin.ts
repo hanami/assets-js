@@ -39,9 +39,9 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
       const assetsSourceDir = path.join(options.sourceDir, assetsDirName);
 
       // Track files loaded by esbuild so we don't double-process them.
-      const referencedFiles = new Set<string>();
+      const loadedFiles = new Set<string>();
       build.onLoad({ filter: /.*/ }, (args) => {
-        referencedFiles.add(args.path);
+        loadedFiles.add(args.path);
         return null;
       });
 
@@ -57,7 +57,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         // Copy extra asset files (in dirs besides js/ and css/) into the destination directory
         const copiedAssets: CopiedAsset[] = [];
         assetDirectories().forEach((pattern) => {
-          copiedAssets.push(...processAssetDirectory(pattern, referencedFiles, options));
+          copiedAssets.push(...processAssetDirectory(pattern, loadedFiles, options));
         });
 
         // Add files already bundled by esbuild into the manifest
@@ -145,7 +145,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         function processAssetDirectory(
           pattern: string,
-          referencedFiles: Set<String>,
+          loadedFiles: Set<String>,
           options: PluginOptions,
         ): CopiedAsset[] {
           const dirPath = path.dirname(pattern);
@@ -156,7 +156,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
             const sourcePath = path.join(dirPath, file.toString());
 
             // Skip referenced files
-            if (referencedFiles.has(sourcePath)) {
+            if (loadedFiles.has(sourcePath)) {
               return;
             }
 
@@ -178,7 +178,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
             );
 
             if (fs.lstatSync(sourcePath).isDirectory()) {
-              assets.push(...processAssetDirectory(destPath, referencedFiles, options));
+              assets.push(...processAssetDirectory(destPath, loadedFiles, options));
             } else {
               copyAsset(sourcePath, destPath);
               assets.push({ sourcePath: sourcePath, destPath: destPath });

@@ -14,9 +14,9 @@ const hanamiEsbuild = (options) => {
             const assetsSourcePath = path.join(options.root, options.sourceDir, assetsDirName);
             const assetsSourceDir = path.join(options.sourceDir, assetsDirName);
             // Track files loaded by esbuild so we don't double-process them.
-            const referencedFiles = new Set();
+            const loadedFiles = new Set();
             build.onLoad({ filter: /.*/ }, (args) => {
-                referencedFiles.add(args.path);
+                loadedFiles.add(args.path);
                 return null;
             });
             // After build, copy over any non-referenced asset files, and create a manifest.
@@ -29,7 +29,7 @@ const hanamiEsbuild = (options) => {
                 // Copy extra asset files (in dirs besides js/ and css/) into the destination directory
                 const copiedAssets = [];
                 assetDirectories().forEach((pattern) => {
-                    copiedAssets.push(...processAssetDirectory(pattern, referencedFiles, options));
+                    copiedAssets.push(...processAssetDirectory(pattern, loadedFiles, options));
                 });
                 // Add files already bundled by esbuild into the manifest
                 for (const outputFile in outputs) {
@@ -102,14 +102,14 @@ const hanamiEsbuild = (options) => {
                         return [];
                     }
                 }
-                function processAssetDirectory(pattern, referencedFiles, options) {
+                function processAssetDirectory(pattern, loadedFiles, options) {
                     const dirPath = path.dirname(pattern);
                     const files = fs.readdirSync(dirPath, { recursive: true });
                     const assets = [];
                     files.forEach((file) => {
                         const sourcePath = path.join(dirPath, file.toString());
                         // Skip referenced files
-                        if (referencedFiles.has(sourcePath)) {
+                        if (loadedFiles.has(sourcePath)) {
                             return;
                         }
                         // Skip directories and any other non-files
@@ -124,7 +124,7 @@ const hanamiEsbuild = (options) => {
                             .relative(dirPath, sourcePath)
                             .replace(path.basename(file.toString()), destFileName));
                         if (fs.lstatSync(sourcePath).isDirectory()) {
-                            assets.push(...processAssetDirectory(destPath, referencedFiles, options));
+                            assets.push(...processAssetDirectory(destPath, loadedFiles, options));
                         }
                         else {
                             copyAsset(sourcePath, destPath);
