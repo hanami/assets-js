@@ -56,8 +56,8 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
 
         // Copy extra asset files (in dirs besides js/ and css/) into the destination directory
         const copiedAssets: CopiedAsset[] = [];
-        assetDirectories().forEach((pattern) => {
-          copiedAssets.push(...processAssetDirectory(pattern));
+        assetDirectories().forEach((dir) => {
+          copiedAssets.push(...processAssetDirectory(dir));
         });
 
         // Add files already bundled by esbuild into the manifest
@@ -136,22 +136,21 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
               return !excludeDirs.includes(dirName!);
             });
 
-            return filteredDirs.map((dir) => path.join(dir, "*"));
+            return filteredDirs;
           } catch (err) {
             console.error("Error listing external directories:", err);
             return [];
           }
         }
 
-        function processAssetDirectory(pattern: string): CopiedAsset[] {
-          const dirPath = path.dirname(pattern);
-          const files = fs.readdirSync(dirPath, { recursive: true });
+        function processAssetDirectory(assetDir: string): CopiedAsset[] {
+          const files = fs.readdirSync(assetDir, { recursive: true });
           const assets: CopiedAsset[] = [];
 
           files.forEach((file) => {
-            const sourcePath = path.join(dirPath, file.toString());
+            const sourcePath = path.join(assetDir, file.toString());
 
-            // Skip referenced files
+            // Skip files loaded by esbuild; those are added to the manifest separately
             if (loadedFiles.has(sourcePath)) {
               return;
             }
@@ -169,7 +168,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
             const destPath = path.join(
               options.destDir,
               path
-                .relative(dirPath, sourcePath)
+                .relative(assetDir, sourcePath)
                 .replace(path.basename(file.toString()), destFileName),
             );
 
