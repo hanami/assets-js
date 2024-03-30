@@ -29,17 +29,6 @@ const hanamiEsbuild = (options) => {
                 extraAssetDirs.forEach((pattern) => {
                     copiedAssets.push(...processAssetDirectory(pattern, referencedFiles, options));
                 });
-                function prepareAsset(assetPath, destinationUrl) {
-                    var asset = { url: destinationUrl };
-                    if (options.sriAlgorithms.length > 0) {
-                        asset.sri = [];
-                        for (const algorithm of options.sriAlgorithms) {
-                            const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, path.join(options.root, assetPath));
-                            asset.sri.push(subresourceIntegrity);
-                        }
-                    }
-                    return asset;
-                }
                 // Add files already bundled by esbuild into the manifest
                 const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
                 const sourceAssetsDir = path.join(options.sourceDir, assetsDirName); // TODO make better
@@ -97,7 +86,6 @@ const hanamiEsbuild = (options) => {
                 }
                 // Write assets manifest to the destination directory
                 await fs.writeJson(manifestPath, assetsManifest, { spaces: 2 });
-                return;
                 //
                 // Helper functions
                 //
@@ -116,25 +104,6 @@ const hanamiEsbuild = (options) => {
                         console.error("Error listing external directories:", err);
                         return [];
                     }
-                }
-                function calulateDestinationUrl(str) {
-                    return normalizeUrl(str).replace(/public/, "");
-                }
-                function normalizeUrl(str) {
-                    return str.replace(/[\\]+/, URL_SEPARATOR);
-                }
-                function calculateSubresourceIntegrity(algorithm, path) {
-                    const content = fs.readFileSync(path, "utf8");
-                    const hash = crypto.createHash(algorithm).update(content).digest("base64");
-                    return `${algorithm}-${hash}`;
-                }
-                // Inspired by https://github.com/evanw/esbuild/blob/2f2b90a99d626921d25fe6d7d0ca50bd48caa427/internal/bundler/bundler.go#L1057
-                function calculateHash(hashBytes, hash) {
-                    if (!hash) {
-                        return null;
-                    }
-                    const result = crypto.createHash("sha256").update(hashBytes).digest("hex");
-                    return result.slice(0, 8).toUpperCase();
                 }
                 function processAssetDirectory(pattern, referencedFiles, options) {
                     const dirPath = path.dirname(pattern);
@@ -182,6 +151,36 @@ const hanamiEsbuild = (options) => {
                     }
                     fs.copyFileSync(srcPath, destPath);
                     return;
+                }
+                function calulateDestinationUrl(str) {
+                    return normalizeUrl(str).replace(/public/, "");
+                }
+                function normalizeUrl(str) {
+                    return str.replace(/[\\]+/, URL_SEPARATOR);
+                }
+                function prepareAsset(assetPath, destinationUrl) {
+                    var asset = { url: destinationUrl };
+                    if (options.sriAlgorithms.length > 0) {
+                        asset.sri = [];
+                        for (const algorithm of options.sriAlgorithms) {
+                            const subresourceIntegrity = calculateSubresourceIntegrity(algorithm, path.join(options.root, assetPath));
+                            asset.sri.push(subresourceIntegrity);
+                        }
+                    }
+                    return asset;
+                }
+                function calculateSubresourceIntegrity(algorithm, path) {
+                    const content = fs.readFileSync(path, "utf8");
+                    const hash = crypto.createHash(algorithm).update(content).digest("base64");
+                    return `${algorithm}-${hash}`;
+                }
+                // Inspired by https://github.com/evanw/esbuild/blob/2f2b90a99d626921d25fe6d7d0ca50bd48caa427/internal/bundler/bundler.go#L1057
+                function calculateHash(hashBytes, hash) {
+                    if (!hash) {
+                        return null;
+                    }
+                    const result = crypto.createHash("sha256").update(hashBytes).digest("hex");
+                    return result.slice(0, 8).toUpperCase();
                 }
             });
         },
