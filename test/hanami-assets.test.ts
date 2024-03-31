@@ -131,6 +131,70 @@ describe("hanami-assets", () => {
     });
   });
 
+  test("handles references to files outside js/ and css/ directories", async () => {
+    const entryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(entryPoint, 'import "../css/app.css";');
+    const cssFile = path.join(dest, "app/assets/css/app.css");
+    await fs.writeFile(
+      cssFile,
+      `
+        @font-face { font-family: "comic-mono-1"; src: url("../fonts/comic-mono-1/comic-mono.ttf"); }
+        @font-face { font-family: "comic-mono-2"; src: url("../fonts/comic-mono-2/comic-mono.ttf"); }
+      `,
+    );
+
+    // Create three same-named font files in distinct directories to ensure we handle name
+    // collisions in their manifest keys
+    await fs.ensureDir(path.join(dest, "app/assets/fonts/comic-mono-1"));
+    const fontFile1 = path.join(dest, "app/assets/fonts/comic-mono-1/comic-mono.ttf");
+    await fs.writeFile(fontFile1, "comic-mono-1");
+    await fs.ensureDir(path.join(dest, "app/assets/fonts/comic-mono-2"));
+    const fontFile2 = path.join(dest, "app/assets/fonts/comic-mono-2/comic-mono.ttf");
+    await fs.writeFile(fontFile2, "comic-mono-2");
+    await fs.ensureDir(path.join(dest, "app/assets/fonts/comic-mono-3"));
+    const fontFile3 = path.join(dest, "app/assets/fonts/comic-mono-3/comic-mono.ttf");
+    await fs.writeFile(fontFile3, "comic-mono-3");
+
+    await assets.run({ root: dest, argv: ["--path=app", "--dest=public/assets"] });
+
+    const entryPointExists = await fs.pathExists(path.join("public/assets/app-6PW7FGD5.js"));
+    expect(entryPointExists).toBe(true);
+    const cssExists = await fs.pathExists(path.join("public/assets/app-MB666W4Y.css"));
+    expect(cssExists).toBe(true);
+    const font1Exists = await fs.pathExists(path.join("public/assets/comic-mono-IUTNYTIA.ttf")); // comic-mono-1
+    expect(font1Exists).toBe(true);
+    const font2Exists = await fs.pathExists(path.join("public/assets/comic-mono-BRKWKEKY.ttf")); // comic-mono-2
+    expect(font2Exists).toBe(true);
+    const font3Exists = await fs.pathExists(
+      path.join("public/assets/comic-mono-3/comic-mono-01349269.ttf"),
+    ); // comic-mono-3
+    expect(font3Exists).toBe(true);
+
+    const manifestContent = await fs.readFile(
+      path.join(dest, "public/assets/assets.json"),
+      "utf-8",
+    );
+    const manifest = JSON.parse(manifestContent);
+
+    expect(manifest).toEqual({
+      "app.js": {
+        url: "/assets/app-6PW7FGD5.js",
+      },
+      "comic-mono-1/comic-mono.ttf": {
+        url: "/assets/comic-mono-IUTNYTIA.ttf",
+      },
+      "comic-mono-2/comic-mono.ttf": {
+        url: "/assets/comic-mono-BRKWKEKY.ttf",
+      },
+      "app.css": {
+        url: "/assets/app-MB666W4Y.css",
+      },
+      "comic-mono-3/comic-mono.ttf": {
+        url: "/assets/comic-mono-3/comic-mono-01349269.ttf",
+      },
+    });
+  });
+
   test("generates SRI", async () => {
     const appEntryPoint = path.join(dest, "app/assets/js/app.js");
     await fs.writeFile(appEntryPoint, "console.log('Hello, World!');");
