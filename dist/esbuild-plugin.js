@@ -33,7 +33,6 @@ const hanamiEsbuild = (options) => {
                 });
                 // Add copied assets into the manifest
                 for (const copiedAsset of copiedAssets) {
-                    // TODO: I wonder if we can skip .map files earlier
                     if (copiedAsset.sourcePath.endsWith(".map")) {
                         continue;
                     }
@@ -45,7 +44,6 @@ const hanamiEsbuild = (options) => {
                 }
                 // Add files already bundled by esbuild into the manifest
                 for (const outputFile in outputs) {
-                    // Ignore esbuild's generated map files
                     if (outputFile.endsWith(".map")) {
                         continue;
                     }
