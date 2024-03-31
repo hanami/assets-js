@@ -2,6 +2,12 @@
 
 Assets management via Esbuild
 
+## v2.1.1 - 2024-04-01
+
+### Fixed
+
+- [Tim Riley, krzykamil] Support references to assets in other directories from from JS and CSS files (in js/ and css/)
+
 ## v2.1.0 - 2024-02-27
 
 ## v2.1.0-rc.3 - 2024-02-16
