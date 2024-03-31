@@ -31,6 +31,18 @@ const hanamiEsbuild = (options) => {
                 assetDirectories().forEach((dir) => {
                     copiedAssets.push(...processAssetDirectory(dir));
                 });
+                // Add copied assets into the manifest
+                for (const copiedAsset of copiedAssets) {
+                    // TODO: I wonder if we can skip .map files earlier
+                    if (copiedAsset.sourcePath.endsWith(".map")) {
+                        continue;
+                    }
+                    // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
+                    var sourceUrl = copiedAsset.sourcePath.replace(assetsSourcePath + path.sep, "");
+                    // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
+                    sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
+                    manifest[sourceUrl] = prepareAsset(copiedAsset.destPath);
+                }
                 // Add files already bundled by esbuild into the manifest
                 for (const outputFile in outputs) {
                     // Ignore esbuild's generated map files
@@ -69,18 +81,6 @@ const hanamiEsbuild = (options) => {
                             .replace(fileHashRegexp, "$2");
                     }
                     manifest[manifestKey] = prepareAsset(outputFile);
-                }
-                // Add copied assets into the manifest
-                for (const copiedAsset of copiedAssets) {
-                    // TODO: I wonder if we can skip .map files earlier
-                    if (copiedAsset.sourcePath.endsWith(".map")) {
-                        continue;
-                    }
-                    // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
-                    var sourceUrl = copiedAsset.sourcePath.replace(assetsSourcePath + path.sep, "");
-                    // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
-                    sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
-                    manifest[sourceUrl] = prepareAsset(copiedAsset.destPath);
                 }
                 // Write assets manifest to the destination directory
                 await fs.writeJson(manifestPath, manifest, { spaces: 2 });
