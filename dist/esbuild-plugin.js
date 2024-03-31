@@ -11,8 +11,8 @@ const hanamiEsbuild = (options) => {
         setup(build) {
             build.initialOptions.metafile = true;
             const manifestPath = path.join(options.root, options.destDir, "assets.json");
-            const assetsSourcePath = path.join(options.root, options.sourceDir, assetsDirName);
             const assetsSourceDir = path.join(options.sourceDir, assetsDirName);
+            const assetsSourcePath = path.join(options.root, assetsSourceDir);
             // Track files loaded by esbuild so we don't double-process them.
             const loadedFiles = new Set();
             build.onLoad({ filter: /.*/ }, (args) => {
