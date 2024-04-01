@@ -18,6 +18,8 @@ const loader: { [ext: string]: Loader } = {
   ".jpg": "file",
   ".jpeg": "file",
   ".gif": "file",
+  ".avif": "file",
+  ".webp": "file",
   ".svg": "file",
   ".woff": "file",
   ".woff2": "file",
