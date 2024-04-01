@@ -25,6 +25,7 @@ interface CopiedAsset {
 }
 
 const assetsDirName = "assets";
+const ignoredFileNames = [".DS_Store"];
 const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
 
 const hanamiEsbuild = (options: PluginOptions): Plugin => {
@@ -146,6 +147,11 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           const assets: CopiedAsset[] = [];
 
           files.forEach((file) => {
+            // Skip ignored files
+            if (ignoredFileNames.includes(path.basename(file.toString()))) {
+              return;
+            }
+
             const sourcePath = path.join(assetDir, file.toString());
 
             // Skip files loaded by esbuild; those are added to the manifest separately
