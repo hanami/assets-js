@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { globSync } from "glob";
 const URL_SEPARATOR = "/";
 const assetsDirName = "assets";
+const ignoredFileNames = [".DS_Store"];
 const fileHashRegexp = /(-[A-Z0-9]{8})(\.\S+)$/;
 const hanamiEsbuild = (options) => {
     return {
@@ -104,6 +105,10 @@ const hanamiEsbuild = (options) => {
                     const files = fs.readdirSync(assetDir, { recursive: true });
                     const assets = [];
                     files.forEach((file) => {
+                        // Skip ignored files
+                        if (ignoredFileNames.includes(path.basename(file.toString()))) {
+                            return;
+                        }
                         const sourcePath = path.join(assetDir, file.toString());
                         // Skip files loaded by esbuild; those are added to the manifest separately
                         if (loadedFiles.has(sourcePath)) {

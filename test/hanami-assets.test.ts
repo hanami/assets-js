@@ -195,6 +195,33 @@ describe("hanami-assets", () => {
     });
   });
 
+  test("ignores .DS_Store files", async () => {
+    const entryPoint = path.join(dest, "app/assets/js/app.js");
+    await fs.writeFile(entryPoint, 'import "../css/app.css";');
+    const cssFile = path.join(dest, "app/assets/css/app.css");
+    await fs.writeFile(cssFile, "");
+
+    // Create .DS_Store files which are used by macOS to store meta data
+    await fs.writeFile(path.join(dest, "app/assets/.DS_Store"), "foobar");
+    await fs.writeFile(path.join(dest, "app/assets/js/.DS_Store"), "foobar");
+    await fs.writeFile(path.join(dest, "app/assets/css/.DS_Store"), "foobar");
+    await fs.ensureDir(path.join(dest, "app/assets/images"));
+    await fs.writeFile(path.join(dest, "app/assets/images/.DS_Store"), "foobar");
+    await fs.ensureDir(path.join(dest, "app/assets/images/subdir"));
+    await fs.writeFile(path.join(dest, "app/assets/images/subdir/.DS_Store"), "foobar");
+
+    await assets.run({ root: dest, argv: ["--path=app", "--dest=public/assets"] });
+
+    const ignoredFiles = globSync("**/.DS_Store", { cwd: path.join("public", "assets") });
+    expect(ignoredFiles.length).toBe(0);
+
+    const manifestContent = await fs.readFile(
+      path.join(dest, "public/assets/assets.json"),
+      "utf-8",
+    );
+    expect(manifestContent).not.toMatch(/\.DS_Store/);
+  });
+
   test("generates SRI", async () => {
     const appEntryPoint = path.join(dest, "app/assets/js/app.js");
     await fs.writeFile(appEntryPoint, "console.log('Hello, World!');");
