@@ -2,6 +2,12 @@
 
 Assets management via Esbuild
 
+## v2.2.0.beta1 - 2024-07-16
+
+### Added
+
+- [Sven Schwyn] Support for `.avip` and `.webp` formats (#28)
+
 ## v2.1.1 - 2024-04-01
 
 ### Fixed
