@@ -2,11 +2,10 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
+  create:
+  schedule:
+    - cron: "30 4 * * *"
 
 jobs:
   build:
@@ -40,3 +39,11 @@ jobs:
 
       - name: Test
         run: make test
+
+  workflow-keepalive:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: liskin/gh-workflow-keepalive@v1
