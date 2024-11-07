@@ -25,7 +25,7 @@ const entryPointExtensions = "app.{js,ts,mjs,mts,tsx,jsx}";
 const findEntryPoints = (sliceRoot) => {
     const result = {};
     const entryPoints = globSync([
-        path.join(sliceRoot, assetsDirName, "js", "**", entryPointExtensions),
+        path.join(sliceRoot, assetsDirName, "js", "**", entryPointExtensions).replaceAll(path.sep, path.posix.sep),
     ]);
     entryPoints.forEach((entryPoint) => {
         let entryPointPath = entryPoint.replace(sliceRoot + "/assets/js/", "");

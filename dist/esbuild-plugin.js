@@ -88,7 +88,7 @@ const hanamiEsbuild = (options) => {
                 function assetDirectories() {
                     const excludeDirs = ["js", "css"];
                     try {
-                        const dirs = globSync([path.join(assetsSourcePath, "*")], { nodir: false });
+                        const dirs = globSync([path.join(assetsSourcePath, "*").replaceAll(path.sep, path.posix.sep)], { nodir: false });
                         const filteredDirs = dirs.filter((dir) => {
                             const dirName = dir.split(path.sep).pop();
                             return !excludeDirs.includes(dirName);
