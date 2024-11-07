@@ -118,7 +118,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         }
 
         // Write assets manifest to the destination directory
-        await fs.writeJson(manifestPath, manifest, { spaces: 2 });
+        await fs.outputJSON(manifestPath, manifest, { spaces: 2 });
 
         //
         // Helper functions
