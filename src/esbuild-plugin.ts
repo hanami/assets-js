@@ -97,20 +97,18 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
             //
             // For example, given the input file "app/assets/images/icons/some-icon.png", return a
             // manifest key of "icons/some-icon.png".
-            manifestKey = inputFiles[0]
+            manifestKey = normalizePath(inputFiles[0]
               .substring(assetsSourceDir.length + 1) // + 1 to account for the sep
               .split(path.sep)
               .slice(1)
-              .join(path.sep);
+              .join(path.sep));
           } else {
             // For all other outputs, determine the manifest key based on the output file name,
             // stripping away the hash suffix added by esbuild.
             //
             // For example, given the output "public/assets/app-2TLUHCQ6.js", return an manifest
             // key of "app.js".
-            manifestKey = outputFile
-              .replace(options.destDir + path.sep, "")
-              .replace(fileHashRegexp, "$2");
+            manifestKey = path.basename(outputFile).replace(fileHashRegexp, "$2");
           }
 
           manifest[manifestKey] = prepareAsset(outputFile);
