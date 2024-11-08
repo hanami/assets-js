@@ -3,8 +3,7 @@ import fs from "fs-extra";
 import path from "path";
 import crypto from "node:crypto";
 import { globSync } from "glob";
-
-const URL_SEPARATOR = "/";
+import { normalizePath } from "./esbuild.js";
 
 export interface PluginOptions {
   root: string;
@@ -70,7 +69,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           var sourceUrl = copiedAsset.sourcePath.replace(assetsSourcePath + path.sep, "");
           // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
           sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
-
+          sourceUrl = normalizePath(sourceUrl);
           manifest[sourceUrl] = prepareAsset(copiedAsset.destPath);
         }
 
@@ -128,7 +127,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
           const excludeDirs = ["js", "css"];
 
           try {
-            const dirs = globSync([path.join(assetsSourcePath, "*")], { nodir: false });
+            const dirs = globSync([normalizePath(path.join(assetsSourcePath, "*"))], { nodir: false });
             const filteredDirs = dirs.filter((dir) => {
               const dirName = dir.split(path.sep).pop();
               return !excludeDirs.includes(dirName!);
@@ -221,7 +220,7 @@ const hanamiEsbuild = (options: PluginOptions): Plugin => {
         }
 
         function calculateDestinationUrl(str: string): string {
-          const normalizedUrl = str.replace(/[\\]+/, URL_SEPARATOR);
+          const normalizedUrl = normalizePath(str);
           return normalizedUrl.replace(/public/, "");
         }
 

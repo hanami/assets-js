@@ -38,6 +38,7 @@ const hanamiEsbuild = (options) => {
                     }
                     // Take the full path of the copied asset and remove everything up to (and including) the "assets/" dir
                     var sourceUrl = copiedAsset.sourcePath.replace(assetsSourcePath + path.sep, "");
+                    sourceUrl = sourceUrl.replaceAll(path.sep, path.posix.sep);
                     // Then remove the first subdir (e.g. "images/"), since we do not include those in the asset paths
                     sourceUrl = sourceUrl.substring(sourceUrl.indexOf("/") + 1);
                     manifest[sourceUrl] = prepareAsset(copiedAsset.destPath);
@@ -81,7 +82,7 @@ const hanamiEsbuild = (options) => {
                     manifest[manifestKey] = prepareAsset(outputFile);
                 }
                 // Write assets manifest to the destination directory
-                await fs.outputJSON(manifestPath, manifest, { spaces: 2 });
+                await fs.writeJSON(manifestPath, manifest, { spaces: 2 });
                 //
                 // Helper functions
                 //
