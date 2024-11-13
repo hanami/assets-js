@@ -2,6 +2,8 @@
 
 Assets management via Esbuild
 
+## v2.2.1 - 2024-11-12
+
 ## v2.2.0 - 2024-11-05
 
 ## v2.2.0.rc.1 - 2024-10-29
