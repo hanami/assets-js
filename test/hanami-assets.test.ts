@@ -235,7 +235,7 @@ describe("hanami-assets", () => {
 
     const entryPointExists = await fs.pathExists(path.join("public/assets/app-6PW7FGD5.js"));
     expect(entryPointExists).toBe(true);
-    const cssExists = await fs.pathExists(path.join("public/assets/app-HYVEQYF6.css"));
+    const cssExists = await fs.pathExists(path.join("public/assets/app-7O2WUXC5.css"));
     expect(cssExists).toBe(true);
 
     const manifestContent = await fs.readFile(
@@ -246,7 +246,7 @@ describe("hanami-assets", () => {
 
     expect(manifest).toEqual({
       "app.css": {
-        url: "/assets/app-HYVEQYF6.css",
+        url: "/assets/app-7O2WUXC5.css",
       },
       "app.js": {
         url: "/assets/app-6PW7FGD5.js",
