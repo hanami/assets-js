@@ -13,23 +13,26 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x, 21.x]
+        node-version:
+          - 20.x
+          - 21.x
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - name: Set up Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Cache node modules
-        uses: actions/cache@v2
+      - name: Cache Node modules
+        uses: actions/cache@v4
         with:
+          # `npm ci` saves Node modules to ~/.npm
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+          key: node-modules-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-${{ matrix.node-version }}-
+            node-modules-${{ runner.os }}-${{ matrix.node-version }}-
 
       - name: Install dependencies
         run: npm ci
