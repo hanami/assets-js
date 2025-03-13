@@ -2,6 +2,26 @@
 
 Assets management via Esbuild
 
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [v2.2.2] - 2025-03-14
+
+### Changed
+
+- Bump esbuild dependency to `^0.25.1`. This brings in [the security fix in 0.25.0](https://github.com/evanw/esbuild/releases/tag/v0.25.0) and allows Hanami projects to address the related security warnings (@timriley in #35).
+
 ## v2.2.1 - 2024-11-12
 
 ## v2.2.0 - 2024-11-05
@@ -63,3 +83,6 @@ Assets management via Esbuild
 - [Luca Guidi] Subresource Integrity
 - [Luca Guidi] Assets manifest
 - [Luca Guidi] Assets compilation
+
+[unreleased]: https://github.com/hanami/assets-js/compare/v2.2.2...HEAD
+[v2.2.2]: https://github.com/olivierlacan/keep-a-changelog/compare/v2.2.1...v2.2.2
