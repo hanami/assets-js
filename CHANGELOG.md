@@ -85,4 +85,4 @@ Assets management via Esbuild
 - [Luca Guidi] Assets compilation
 
 [unreleased]: https://github.com/hanami/assets-js/compare/v2.2.2...HEAD
-[v2.2.2]: https://github.com/olivierlacan/keep-a-changelog/compare/v2.2.1...v2.2.2
+[v2.2.2]: https://github.com/hanami/assets-js/compare/v2.2.1...v2.2.2
